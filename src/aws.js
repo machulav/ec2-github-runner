@@ -11,17 +11,14 @@ function runEc2Instance() {
     MaxCount: 1,
   };
 
-  return new Promise((resolve, reject) => {
-    ec2.runInstances(params, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({
-          instanceId: data.Instances[0].InstanceId,
-        });
-      }
+  return ec2
+    .runInstances(params)
+    .promise()
+    .then((res) => {
+      return {
+        instanceId: res.Instances[0].InstanceId,
+      };
     });
-  });
 }
 
 module.exports = {
