@@ -22,7 +22,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git add dist/
-          git commit -m "chore: update dist" || echo "No changes to commit"
+          git commit -m "Update dist" || echo "No changes to commit"
           git push origin main
   #test-action:
   #  needs: package

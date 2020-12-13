@@ -3,6 +3,7 @@
   "author": "Volodymyr Machula",
   "scripts": {
     "start": "node -r dotenv/config ./src/start.js",
+    "lint": "eslint ./src/*.js",
     "package": "ncc build ./src/index.js --license license.txt"
   },
   "dependencies": {
@@ -11,6 +12,7 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.25.1",
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "eslint": "^7.15.0"
   }
 }
