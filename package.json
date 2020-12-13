@@ -1,0 +1,16 @@
+{
+  "name": "aws-github-runner-action",
+  "author": "Volodymyr Machula",
+  "scripts": {
+    "start": "node -r dotenv/config ./src/start.js",
+    "package": "ncc build ./src/index.js --license license.txt"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "aws-sdk": "^2.809.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.25.1",
+    "dotenv": "^8.2.0"
+  }
+}

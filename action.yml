@@ -1,0 +1,30 @@
+name: aws-github-runner-action
+description: '' # TODO
+author: Volodymyr Machula
+branding:
+  icon: 'award' # TODO
+  color: 'green' # TODO
+inputs:
+  github_token:
+    description: '' # TODO
+    required: true
+  action:
+    description: '' # TODO, possible values: start, stop
+    required: true
+  ec2_image_id:
+    description: '' # TODO, possible values: start, stop
+    required: true
+  ec2_instance_type:
+    description: '' # TODO, possible values: start, stop
+    required: true
+  label:
+    description: '' # TODO, possible values: start, stop
+    required: false
+outputs:
+  label:
+    description: '' # TODO
+  instanceId:
+    description: '' # TODO
+runs:
+  using: 'node12'
+  main: './dist/index.js'
