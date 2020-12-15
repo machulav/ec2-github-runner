@@ -14,3 +14,7 @@
 - Add missing properties to package.json
 - Create example.env file
 - Refactor GitHub Workflows
+
+# GitHub Secret Token
+
+Your GitHub Secret Token should have `repo` scope assigned.

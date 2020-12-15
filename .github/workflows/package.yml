@@ -41,8 +41,7 @@ jobs:
   #      id: action
   #      uses: ./
   #      with:
-  #        github_token: 1
-  #        action: start
+  #        github_token: ${{ secrets.GITHUB_TOKEN }}
   #        ec2_image_id: ami-03b0c74f4ab679dcf
   #        ec2_instance_type: t3.nano
   #        label: test-runner

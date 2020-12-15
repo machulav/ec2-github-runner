@@ -1,19 +1,22 @@
 const aws = require('./aws');
+const gh = require('./gh');
 const core = require('@actions/core');
 
-function setOutputValues(label, instanceId) {
+function setOutputValues(instanceId) {
+  const label = core.getInput('label');
+
   core.setOutput('label', label);
   core.setOutput('instanceId', instanceId);
 }
 
 (async function () {
   try {
-    const ec2InstanceData = await aws.runEc2Instance();
+    const githubRegistrationToken = await gh.getRegistrationToken();
+    const ec2InstanceData = await aws.runEc2Instance(githubRegistrationToken);
 
-    const label = core.getInput('label');
-    setOutputValues(label, ec2InstanceData.instanceId);
+    setOutputValues(ec2InstanceData.instanceId);
   } catch (error) {
-    console.log(error);
+    core.error(error);
     core.setFailed(error.message);
   }
 })();

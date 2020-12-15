@@ -14,10 +14,17 @@ function runEc2Instance() {
   return ec2
     .runInstances(params)
     .promise()
-    .then((res) => {
+    .then((data) => {
+      core.info('EC2 instance is created');
+
       return {
-        instanceId: res.Instances[0].InstanceId,
+        instanceId: data.Instances[0].InstanceId,
       };
+    })
+    .catch((error) => {
+      core.error('EC2 instance creation error');
+
+      throw error;
     });
 }
 

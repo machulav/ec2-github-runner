@@ -6,10 +6,7 @@ branding:
   color: 'green' # TODO
 inputs:
   github_token:
-    description: '' # TODO
-    required: true
-  action:
-    description: '' # TODO, possible values: start, stop
+    description: 'GitHub Secret Token with "repo" scope assigned'
     required: true
   ec2_image_id:
     description: '' # TODO, possible values: start, stop
