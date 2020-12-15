@@ -1,20 +1,11 @@
-# aws-github-runner-action
+# (In Progress) aws-github-runner action for GitHub Actions
 
-# TODO
+Create an on-demand AWS EC2 instance and register it as a self-hosted runner for your GitHub repository.
 
-- Add description
-- Descrbe the usecase
-- Define the least privilage AWS policy required for running the action
-- Describe all the parameters and outputs
-- Show example
-- Resolve all the TODOs
-- Remove EC2 instance when work is done
-- Add linter
-- Add auto tests
-- Add missing properties to package.json
-- Create example.env file
-- Refactor GitHub Workflows
+The runner is automatically started when the GitHub Actions workflow starts, runs all your jobs and is removed after the work is done.
 
-# GitHub Secret Token
+# Notes
+
+## GitHub Secret Token
 
 Your GitHub Secret Token should have `repo` scope assigned.

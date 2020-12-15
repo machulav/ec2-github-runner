@@ -24,26 +24,3 @@ jobs:
           git add dist/
           git commit -m "Update dist" || echo "No changes to commit"
           git push origin main
-  #test-action:
-  #  needs: package
-  #  runs-on: ubuntu-latest
-  #  name: Test Action
-  #  steps:
-  #    - name: Checkout
-  #      uses: actions/checkout@v2
-  #    - name: Configure AWS credentials
-  #      uses: aws-actions/configure-aws-credentials@v1
-  #      with:
-  #        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #        aws-region: ${{ secrets.AWS_REGION }}
-  #    - name: Create EC2 self-hosted runner
-  #      id: action
-  #      uses: ./
-  #      with:
-  #        github_token: ${{ secrets.GITHUB_TOKEN }}
-  #        ec2_image_id: ami-03b0c74f4ab679dcf
-  #        ec2_instance_type: t3.nano
-  #        label: test-runner
-  #    - name: Print output
-  #      run: echo "lavel - ${{ steps.action.outputs.label }}, instanceId - ${{ steps.action.outputs.instanceId }}"
