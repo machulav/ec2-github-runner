@@ -1,4 +1,4 @@
-# (In Progress) aws-github-runner action for GitHub Actions
+# (In Progress) "aws-github-runner" action for GitHub Actions
 
 Create an on-demand AWS EC2 instance and register it as a self-hosted runner for your GitHub repository.
 
