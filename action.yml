@@ -1,12 +1,9 @@
 name: aws-github-runner-action
-description: '' # TODO
+description: GitHub Action for automatic EC2 instance creation and registering it as a self-hosted GitHub Actions runner
 author: Volodymyr Machula
-branding:
-  icon: 'award' # TODO
-  color: 'green' # TODO
 inputs:
   github_token:
-    description: 'GitHub Secret Token with "repo" scope assigned'
+    description: GitHub Secret Token with a 'repo' scope assigned
     required: true
   ec2_image_id:
     description: '' # TODO, possible values: start, stop
@@ -26,8 +23,7 @@ inputs:
 outputs:
   label:
     description: '' # TODO
-  instanceId:
-    description: '' # TODO
 runs:
-  using: 'node12'
-  main: './dist/index.js'
+  using: node12
+  main: ./dist/index.js
+  post: ./dist/cleanup/index.js

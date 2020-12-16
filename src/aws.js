@@ -1,23 +1,6 @@
 const AWS = require('aws-sdk');
 const core = require('@actions/core');
 
-async function waitForInstanceRunning(ec2InstanceId) {
-  const ec2 = new AWS.EC2();
-
-  const params = {
-    InstanceIds: [ec2InstanceId],
-  };
-
-  try {
-    await ec2.waitFor('instanceRunning', params).promise();
-    core.info('EC2 instance is running');
-    return;
-  } catch (error) {
-    core.error('EC2 instance init error');
-    throw error;
-  }
-}
-
 async function createEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label) {
   const ec2 = new AWS.EC2();
 
@@ -53,7 +36,42 @@ async function createEc2Instance(githubContext, githubRegistrationToken, subnetI
   }
 }
 
+async function terminateEc2Instance(ec2InstanceId) {
+  const ec2 = new AWS.EC2();
+
+  const params = {
+    InstanceIds: [ec2InstanceId],
+  };
+
+  try {
+    await ec2.terminateInstances(params).promise();
+    core.info('EC2 instance is terminated');
+    return;
+  } catch (error) {
+    core.error('EC2 instance termination error');
+    throw error;
+  }
+}
+
+async function waitForInstanceRunning(ec2InstanceId) {
+  const ec2 = new AWS.EC2();
+
+  const params = {
+    InstanceIds: [ec2InstanceId],
+  };
+
+  try {
+    await ec2.waitFor('instanceRunning', params).promise();
+    core.info('EC2 instance is up and running');
+    return;
+  } catch (error) {
+    core.error('EC2 instance init error');
+    throw error;
+  }
+}
+
 module.exports = {
   createEc2Instance,
+  terminateEc2Instance,
   waitForInstanceRunning,
 };

@@ -7,7 +7,7 @@ name: Package
 
 jobs:
   package:
-    name: Package distribution file
+    name: Package distribution files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

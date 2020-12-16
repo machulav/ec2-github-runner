@@ -2,11 +2,10 @@ const aws = require('./aws');
 const gh = require('./gh');
 const core = require('@actions/core');
 
-function setOutputAndState(label, instanceId) {
+function setOutputAndState(label, ec2InstanceId) {
   core.setOutput('label', label);
-  core.setOutput('instanceId', instanceId);
 
-  core.saveState('instanceId', instanceId);
+  core.saveState('ec2InstanceId', ec2InstanceId);
 }
 
 (async function () {

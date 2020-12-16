@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "node -r dotenv/config ./src/index.js",
     "lint": "eslint ./src/*.js",
-    "package": "ncc build ./src/index.js --license license.txt"
+    "package": "ncc build ./src/index.js && ncc build ./src/cleanup.js --out ./dist/cleanup"
   },
   "dependencies": {
     "@actions/core": "^1.2.6",
