@@ -14,6 +14,12 @@ inputs:
   ec2_instance_type:
     description: '' # TODO, possible values: start, stop
     required: true
+  subnet_id:
+    description: '' # TODO, possible values: start, stop
+    required: true
+  security_group_id:
+    description: '' # TODO, possible values: start, stop
+    required: true
   label:
     description: '' # TODO, possible values: start, stop
     required: false
