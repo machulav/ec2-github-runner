@@ -17,9 +17,6 @@ inputs:
   security_group_id:
     description: '' # TODO, possible values: start, stop
     required: true
-  label:
-    description: '' # TODO, possible values: start, stop
-    required: false
 outputs:
   label:
     description: '' # TODO

@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const core = require('@actions/core');
 
-async function createEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label) {
+async function startEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label) {
   const ec2 = new AWS.EC2();
 
   let userData = [
@@ -28,10 +28,11 @@ async function createEc2Instance(githubContext, githubRegistrationToken, subnetI
 
   try {
     const result = await ec2.runInstances(params).promise();
-    core.info('EC2 instance is created');
-    return result.Instances[0].InstanceId;
+    const ec2InstanceId = result.Instances[0].InstanceId;
+    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
+    return ec2InstanceId;
   } catch (error) {
-    core.error('EC2 instance creation error');
+    core.error('AWS EC2 instance starting error');
     throw error;
   }
 }
@@ -45,10 +46,10 @@ async function terminateEc2Instance(ec2InstanceId) {
 
   try {
     await ec2.terminateInstances(params).promise();
-    core.info('EC2 instance is terminated');
+    core.info(`AWS EC2 instance ${ec2InstanceId} is terminated`);
     return;
   } catch (error) {
-    core.error('EC2 instance termination error');
+    core.error(`AWS EC2 instance ${ec2InstanceId} termination error`);
     throw error;
   }
 }
@@ -62,16 +63,16 @@ async function waitForInstanceRunning(ec2InstanceId) {
 
   try {
     await ec2.waitFor('instanceRunning', params).promise();
-    core.info('EC2 instance is up and running');
+    core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
     return;
   } catch (error) {
-    core.error('EC2 instance init error');
+    core.error(`AWS EC2 instance ${ec2InstanceId} init error`);
     throw error;
   }
 }
 
 module.exports = {
-  createEc2Instance,
+  startEc2Instance,
   terminateEc2Instance,
   waitForInstanceRunning,
 };

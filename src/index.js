@@ -3,26 +3,29 @@ const gh = require('./gh');
 const core = require('@actions/core');
 
 function setOutputAndState(label, ec2InstanceId) {
+  // save action output
   core.setOutput('label', label);
 
-  core.saveState('ec2InstanceId', ec2InstanceId);
+  // save state for the cleanup script
+  core.saveState('EC2_INSTANCE_ID', ec2InstanceId);
+  core.saveState('LABEL', label);
+}
+
+function generateUniqueLabel() {
+  return Math.random().toString(36).substr(2, 5);
 }
 
 (async function () {
   try {
-    core.startGroup('GitHub Registration Token receiving');
     const githubContext = gh.getContext();
     const githubRegistrationToken = await gh.getRegistrationToken();
-    core.endGroup();
-
     const subnetId = core.getInput('subnet_id');
     const securityGroupId = core.getInput('security_group_id');
-    const label = core.getInput('label');
+    const label = generateUniqueLabel();
 
-    core.startGroup('AWS EC2 instance creation');
-    const ec2InstanceId = await aws.createEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label);
+    const ec2InstanceId = await aws.startEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label);
     await aws.waitForInstanceRunning(ec2InstanceId);
-    core.endGroup();
+    await gh.waitForRunnerCreated(label);
 
     setOutputAndState(label, ec2InstanceId);
   } catch (error) {

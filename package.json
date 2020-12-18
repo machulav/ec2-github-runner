@@ -2,14 +2,16 @@
   "name": "aws-github-runner-action",
   "author": "Volodymyr Machula",
   "scripts": {
-    "dev": "node -r dotenv/config ./src/index.js",
+    "index": "node -r dotenv/config ./src/index.js",
+    "cleanup": "node -r dotenv/config ./src/cleanup.js",
     "lint": "eslint ./src/*.js",
     "package": "ncc build ./src/index.js && ncc build ./src/cleanup.js --out ./dist/cleanup"
   },
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
-    "aws-sdk": "^2.809.0"
+    "aws-sdk": "^2.809.0",
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.25.1",
