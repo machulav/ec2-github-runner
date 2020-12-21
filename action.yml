@@ -1,6 +1,9 @@
 name: On-demand self-hosted EC2 runner for GitHub Actions
 description: GitHub Action for automatic creation and registration EC2 instance as a GitHub Actions self-hosted runner.
 author: Volodymyr Machula
+branding:
+  icon: 'box'
+  color: 'orange'
 inputs:
   mode:
     description: >-
