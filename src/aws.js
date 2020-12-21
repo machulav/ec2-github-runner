@@ -1,10 +1,11 @@
 const AWS = require('aws-sdk');
 const core = require('@actions/core');
+const config = require('./config');
 
-async function startEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label) {
+async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
-  let userData = [
+  const userData = [
     '#!/bin/bash',
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
     'mkdir /actions-runner && cd /actions-runner',
@@ -12,18 +13,18 @@ async function startEc2Instance(githubContext, githubRegistrationToken, subnetId
     'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
     'useradd github',
     'chown -R github:github /actions-runner',
-    `su github -c "./config.sh --url https://github.com/${githubContext.owner}/${githubContext.repo} --token ${githubRegistrationToken} --labels ${label}"`,
+    `su github -c "./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}"`,
     'su github -c "./run.sh"',
   ];
 
   const params = {
-    ImageId: core.getInput('ec2_image_id'),
-    InstanceType: core.getInput('ec2_instance_type'),
+    ImageId: config.input.ec2ImageId,
+    InstanceType: config.input.ec2InstanceType,
     MinCount: 1,
     MaxCount: 1,
-    UserData: new Buffer(userData.join('\n')).toString('base64'),
-    SubnetId: subnetId,
-    SecurityGroupIds: [securityGroupId],
+    UserData: Buffer.from(userData.join('\n')).toString('base64'),
+    SubnetId: config.input.subnetId,
+    SecurityGroupIds: [config.input.securityGroupId],
   };
 
   try {
@@ -37,19 +38,19 @@ async function startEc2Instance(githubContext, githubRegistrationToken, subnetId
   }
 }
 
-async function terminateEc2Instance(ec2InstanceId) {
+async function terminateEc2Instance() {
   const ec2 = new AWS.EC2();
 
   const params = {
-    InstanceIds: [ec2InstanceId],
+    InstanceIds: [config.input.ec2InstanceId],
   };
 
   try {
     await ec2.terminateInstances(params).promise();
-    core.info(`AWS EC2 instance ${ec2InstanceId} is terminated`);
+    core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is terminated`);
     return;
   } catch (error) {
-    core.error(`AWS EC2 instance ${ec2InstanceId} termination error`);
+    core.error(`AWS EC2 instance ${config.input.ec2InstanceId} termination error`);
     throw error;
   }
 }

@@ -8,14 +8,6 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "index"]
-    },
-    {
-      "name": "debug cleanup",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "cleanup"]
     }
   ]
 }

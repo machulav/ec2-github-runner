@@ -1,33 +1,30 @@
 const aws = require('./aws');
 const gh = require('./gh');
+const config = require('./config');
 const core = require('@actions/core');
 
-function setOutputAndState(label, ec2InstanceId) {
-  // save action output
+function setOutput(label, ec2InstanceId) {
   core.setOutput('label', label);
-
-  // save state for the cleanup script
-  core.saveState('EC2_INSTANCE_ID', ec2InstanceId);
-  core.saveState('LABEL', label);
+  core.setOutput('ec2-instance-id', ec2InstanceId);
 }
 
-function generateUniqueLabel() {
-  return Math.random().toString(36).substr(2, 5);
+async function start() {
+  const label = config.generateUniqueLabel();
+  const githubRegistrationToken = await gh.getRegistrationToken();
+  const ec2InstanceId = await aws.startEc2Instance(label, githubRegistrationToken);
+  await aws.waitForInstanceRunning(ec2InstanceId);
+  await gh.waitForRunnerCreated(label);
+  setOutput(label, ec2InstanceId);
+}
+
+async function stop() {
+  await aws.terminateEc2Instance();
+  await gh.removeRunner();
 }
 
 (async function () {
   try {
-    const githubContext = gh.getContext();
-    const githubRegistrationToken = await gh.getRegistrationToken();
-    const subnetId = core.getInput('subnet_id');
-    const securityGroupId = core.getInput('security_group_id');
-    const label = generateUniqueLabel();
-
-    const ec2InstanceId = await aws.startEc2Instance(githubContext, githubRegistrationToken, subnetId, securityGroupId, label);
-    await aws.waitForInstanceRunning(ec2InstanceId);
-    await gh.waitForRunnerCreated(label);
-
-    setOutputAndState(label, ec2InstanceId);
+    config.input.mode === 'start' ? await start() : await stop();
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);

@@ -1,5 +1,4 @@
 env:
-  commonjs: true
   es6: true
   node: true
   jest: true
@@ -8,3 +7,6 @@ extends:
 parserOptions:
   ecmaVersion: 2018
   sourceType: module
+rules:
+  no-use-before-define: error
+  prefer-const: error

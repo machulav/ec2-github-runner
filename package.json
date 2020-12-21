@@ -1,11 +1,20 @@
 {
-  "name": "aws-github-runner-action",
+  "name": "ec2-github-runner",
+  "description": "GitHub Action for automatic creation and registration EC2 instance as a GitHub Actions self-hosted runner.",
   "author": "Volodymyr Machula",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:machulav/ec2-github-runner.git"
+  },
+  "homepage": "https://github.com/machulav/ec2-github-runner#readme",
+  "bugs": {
+    "url": "https://github.com/machulav/ec2-github-runner/issues"
+  },
   "scripts": {
     "index": "node -r dotenv/config ./src/index.js",
-    "cleanup": "node -r dotenv/config ./src/cleanup.js",
     "lint": "eslint ./src/*.js",
-    "package": "ncc build ./src/index.js && ncc build ./src/cleanup.js --out ./dist/cleanup"
+    "package": "ncc build ./src/index.js"
   },
   "dependencies": {
     "@actions/core": "^1.2.6",

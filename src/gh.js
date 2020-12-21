@@ -1,25 +1,28 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const _ = require('lodash');
+const config = require('./config');
 
-function getContext() {
-  // the values of github.context.repo.owner and github.context.repo.repo are taken from
-  // the environment variable GITHUB_REPOSITORY specified in "owner/repo" format and
-  // provided by the GitHub Action during the runtime
-  return {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-  };
+// use the unique label to find the runner
+// as we don't have the runner's id, it's not possible to get it in any other way
+async function getRunner(label) {
+  const octokit = github.getOctokit(config.input.githubToken);
+
+  try {
+    const response = await octokit.request('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+    const foundRunners = _.filter(response.data.runners, { labels: [{ name: label }] });
+    return foundRunners.length > 0 ? foundRunners[0] : null;
+  } catch (error) {
+    return null;
+  }
 }
 
 // get GitHub Registration Token for registering a self-hosted runner
 async function getRegistrationToken() {
-  const githubToken = core.getInput('github_token');
-  const octokit = github.getOctokit(githubToken);
+  const octokit = github.getOctokit(config.input.githubToken);
 
-  const context = getContext();
   try {
-    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', context);
+    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
@@ -28,33 +31,12 @@ async function getRegistrationToken() {
   }
 }
 
-// use the unique label to find the runner
-// as we don't have the runner's id, it's not possible to get it in any other way
-async function getRunner(label) {
-  const githubToken = core.getInput('github_token');
-  const octokit = github.getOctokit(githubToken);
-
-  const context = getContext();
+async function removeRunner() {
+  const runner = await getRunner(config.input.label);
+  const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const response = await octokit.request('GET /repos/{owner}/{repo}/actions/runners', context);
-    const foundRunners = _.filter(response.data.runners, { labels: [{ name: label }] });
-    return foundRunners.length > 0 ? foundRunners[0] : null;
-  } catch (error) {
-    return null;
-  }
-}
-
-async function removeRunner(label) {
-  const runner = await getRunner(label);
-
-  const githubToken = core.getInput('github_token');
-  const octokit = github.getOctokit(githubToken);
-
-  const context = getContext();
-
-  try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(context, { runner_id: runner.id }));
+    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
     core.info('GitHub self-hosted runner is removed');
     return;
   } catch (error) {
@@ -89,7 +71,6 @@ async function waitForRunnerCreated(label) {
 }
 
 module.exports = {
-  getContext,
   getRegistrationToken,
   removeRunner,
   waitForRunnerCreated,
