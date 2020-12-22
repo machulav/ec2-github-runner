@@ -1,6 +1,6 @@
 # On-demand self-hosted EC2 runner for GitHub Actions
 
-Using this GitHub action, you can start a new EC2 instance and register it as a [self-hosted runner in GitHub](<(https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners)>) right before you need it. Then run all the required jobs on it and stop it when you don't need it anymore.
+Using this GitHub action, you can start a new EC2 instance and register it as a [self-hosted runner in GitHub](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners) right before you need it. Then run all the required jobs on it and stop it when you don't need it anymore.
 
 **Table of Contents**
 
@@ -19,7 +19,7 @@ Using this GitHub action, you can start a new EC2 instance and register it as a 
 | ------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mode`              | Always.                               | Specify here which mode you want to use:<br>- `start` - to start a new runner;<br>- `stop` - to stop the previously created runner.                                                                             |
 | `github-token`      | Always.                               | GitHub Personal Access Token with a `repo` scope assigned.                                                                                                                                                      |
-| `ec2-image-id`      | Required if you use the `start` mode. | EC2 AMI Id. <br><br> The new runner will be launched from this image.                                                                                                                                           |
+| `ec2-image-id`      | Required if you use the `start` mode. | EC2 AMI Id. <br><br> The new runner will be launched from this image. The action is compatible only with Linux images.                                                                                          |
 | `ec2-instance-type` | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                              |
 | `subnet-id`         | Required if you use the `start` mode. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.                                                                                                                        |
 | `security-group-id` | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet. <br><br> The runner doesn't require any inbound traffic. However, outbound traffic should be allowed. |
@@ -64,14 +64,14 @@ jobs:
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1.0.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: machulav/ec2-github-runner@main
+        uses: machulav/ec2-github-runner@v1
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
@@ -100,7 +100,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/aws-github-runner@main
+        uses: machulav/ec2-github-runner@v1.0.0
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
