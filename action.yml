@@ -1,5 +1,5 @@
-name: On-demand self-hosted EC2 runner for GitHub Actions
-description: GitHub Action for automatic creation and registration EC2 instance as a GitHub Actions self-hosted runner.
+name: On-demand self-hosted AWS EC2 runner for GitHub Actions
+description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
 author: Volodymyr Machula
 branding:
   icon: 'box'
@@ -13,11 +13,11 @@ inputs:
     required: true
   github-token:
     description: >-
-      GitHub Personal Access Token with a 'repo' scope assigned.
+      GitHub Personal Access Token with the 'repo' scope assigned.
     required: true
   ec2-image-id:
     description: >-
-      EC2 AMI Id. The new runner will be launched from this image.
+      EC2 Image Id (AMI). The new runner will be launched from this image.
       This input is required if you use the 'start' mode.
     required: false
   ec2-instance-type:
