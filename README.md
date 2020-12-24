@@ -2,20 +2,54 @@
 
 Start your EC2 [self-hosted runner](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners) right before you need it.
 Run the job on it.
-And finally, stop it when you finish.
+Finally, stop it when you finish.
+And all this automatically as a part of your GitHub Actions workflow.
 
 ![GitHub Actions self-hosted EC2 runner](docs/images/github-actions-summary.png)
 
 **Table of Contents**
 
+- [Use cases](#use-cases)
+  - [Access private resources in your VPC](#access-private-resources-in-your-vpc)
+  - [Customize hardware configuration](#customize-hardware-configuration)
+  - [Save costs](#save-costs)
 - [Usage](#usage)
   - [How to start](#how-to-start)
   - [Inputs](#inputs)
   - [Environment variables](#environment-variables)
   - [Outputs](#outputs)
   - [Example](#example)
-- [Self-hosted runner security with public repositories](self-hosted-runner-security-with-public-repositories)
+- [Self-hosted runner security with public repositories](#self-hosted-runner-security-with-public-repositories)
 - [License Summary](#license-summary)
+
+## Use cases
+
+### Access private resources in your VPC
+
+The action can start the EC2 runner in any subnet of your VPC that you need - public or private.
+In this way, you can easily access any private resources in your VPC from your GitHub Actions workflow.
+
+For example, you can access your database in the private subnet to run the database migration.
+
+### Customize hardware configuration
+
+Some of your CI workloads may require more powerful hardware that GitHub-hosted runners provide.
+In the action, you can configure any EC2 instance type for your runner that AWS provides.
+
+For example, you may run c5.4xlarge EC2 runner for some of your compute-intensive workloads.
+Or r5.xlarge EC2 runner for workloads that process large data sets in memory.
+
+### Save costs
+
+If your CI workloads don't need the power of the GitHub-hosted runners and the execution takes more than a couple of minutes,
+you can consider running it on a cheaper and less powerful instance from AWS.
+
+According to [GitHub's documentation](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners/about-self-hosted-runners), you don't need to pay for the jobs handled by the self-hosted runners:
+
+> Self-hosted runners are free to use with GitHub Actions, but you are responsible for the cost of maintaining your runner machines.
+
+So you will be charged by GitHub only for the time the self-hosted runner start and stop.
+EC2 self-hosted runner will handle everything else so that you will pay for it to AWS, which can be less expensive than the price for the GitHub-hosted runner.
 
 ## Usage
 
@@ -61,7 +95,15 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
    You don't need to install anything special beforehand into the AMI.
    The action will install all the necessary tools during the EC2 instance creation.
 
-**4. Configure the GitHub workflow**
+**4. Prepare subnet and security group**
+
+1. Create a new VPC and a new subnet in it.
+   Or use the existing VPC and subnet.
+2. Create a new security group for the runners in the VPC.
+   The runner doesn't require any inbound traffic.
+   However, outbound traffic for port 443 should be allowed so the runner can pull GitHub Actions' tasks.
+
+**5. Configure the GitHub workflow**
 
 1. Create a new GitHub Actions workflow or edit the existing one.
 2. Use the documentation and example below to configure your workflow.
@@ -72,16 +114,16 @@ Now you're ready to go!
 
 ### Inputs
 
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                              | Description                                                                                                                                                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use:<br>- `start` - to start a new runner;<br>- `stop` - to stop the previously created runner.                                                                             |
-| `github-token`                                                                                                                                                               | Always required.                      | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                    |
-| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. The action is compatible only with Linux images.                                                                                  |
-| `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                              |
-| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.                                                                                                                        |
-| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet. <br><br> The runner doesn't require any inbound traffic. However, outbound traffic should be allowed. |
-| `label`                                                                                                                                                                      | Required if you use the `stop` mode.  | Name of the unique label assigned to the runner. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore.                                                             |
-| `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.  | EC2 Instance Id of the created runner. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                                                                             |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                              | Description                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use:<br>- `start` - to start a new runner;<br>- `stop` - to stop the previously created runner.                                                                                                 |
+| `github-token`                                                                                                                                                               | Always required.                      | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                        |
+| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. The action is compatible only with Linux images.                                                                                                      |
+| `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                                                  |
+| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.                                                                                                                                            |
+| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet.                                                                                                                           |
+| `label`                                                                                                                                                                      | Required if you use the `stop` mode.  | Name of the unique label assigned to the runner. <br><br> The label is provided by the output of the action in the `start` mode. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore. |
+| `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.  | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                    |
 
 ### Environment variables
 
@@ -163,9 +205,9 @@ jobs:
 
 ## Self-hosted runner security with public repositories
 
-We recommend that you do not use self-hosted runners with public repositories.
-
-Forks of your public repository can potentially run dangerous code on your self-hosted runner machine by creating a pull request that executes the code in a workflow.
+> We recommend that you do not use self-hosted runners with public repositories.
+>
+> Forks of your public repository can potentially run dangerous code on your self-hosted runner machine by creating a pull request that executes the code in a workflow.
 
 Please find more details about this security note on [GitHub documentation](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners/about-self-hosted-runners#self-hosted-runner-security-with-public-repositories).
 
