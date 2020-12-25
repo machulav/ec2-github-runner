@@ -16,6 +16,8 @@ jobs:
           ref: main
       - name: Install packages
         run: npm ci
+      - name: Run linter
+        run: npm run lint
       - name: Package
         run: npm run package
       - name: Commit
