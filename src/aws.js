@@ -25,6 +25,14 @@ async function startEc2Instance(label, githubRegistrationToken) {
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
     SubnetId: config.input.subnetId,
     SecurityGroupIds: [config.input.securityGroupId],
+    NetworkInterfaces: [
+      {
+        AssociatePublicIpAddress: true,
+        DeviceIndex: 0,
+        Ipv6AddressCount: 1,
+        SubnetId: config.input.subnetId
+      }
+    ],
   };
 
   try {
