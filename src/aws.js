@@ -7,7 +7,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   const userData = [
     '#!/bin/bash',
-    'amazon-linux-extras install docker -y',
+    'wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.3.2/flyway-commandline-7.3.2-linux-x64.tar.gz | tar xvz && sudo ln -s `pwd`/flyway-7.3.2/flyway /usr/local/bin',
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
     'mkdir /actions-runner && cd /actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
