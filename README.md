@@ -187,6 +187,7 @@ jobs:
     needs:
       - start-runner # required to get output from the start-runner job
       - do-the-job # required to wait when the main job is done
+    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
