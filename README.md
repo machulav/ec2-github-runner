@@ -95,13 +95,15 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
    You don't need to install anything special beforehand into the AMI.
    The action will install all the necessary tools during the EC2 instance creation.
 
-**4. Prepare subnet and security group**
+**4. Prepare VPC with subnet and security group**
 
 1. Create a new VPC and a new subnet in it.
    Or use the existing VPC and subnet.
 2. Create a new security group for the runners in the VPC.
    The runner doesn't require any inbound traffic.
    However, outbound traffic for port 443 should be allowed so the runner can pull GitHub Actions' tasks.
+
+Note: Make sure your EC2 instance has access to the internet in order to connect to GitHub Actions and pull the tasks.
 
 **5. Configure the GitHub workflow**
 
@@ -166,7 +168,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v1.0.1
+        uses: machulav/ec2-github-runner@v1.0.0
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
@@ -196,7 +198,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v1.0.1
+        uses: machulav/ec2-github-runner@v1.0.0
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
