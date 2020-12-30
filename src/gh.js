@@ -35,9 +35,15 @@ async function removeRunner() {
   const runner = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
 
+  // skip the runner removal process if the runner is not found
+  if (!runner) {
+    core.info(`GitHub self-hosted runner with label ${config.input.label} is not found, so the removal is skipped`);
+    return;
+  }
+
   try {
     await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
-    core.info('GitHub self-hosted runner is removed');
+    core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {
     core.error('GitHub self-hosted runner removal error');
