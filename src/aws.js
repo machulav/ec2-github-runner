@@ -7,13 +7,15 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   const userData = [
     '#!/bin/bash',
-    'wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.3.2/flyway-commandline-7.3.2-linux-x64.tar.gz | tar xvz && sudo ln -s `pwd`/flyway-7.3.2/flyway /usr/local/bin',
+    'yum update -y',
+    'amazon-linux-extras install -y docker',
     'chmod +x /usr/local/bin/flyway',
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
     'mkdir /actions-runner && cd /actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
     'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
     'useradd github',
+    'sudo usermod -a -G docker github',
     'chown -R github:github /actions-runner',
     `su github -c "./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}"`,
     'su github -c "./run.sh"',
