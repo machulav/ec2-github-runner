@@ -34,6 +34,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
       }
     ],
   };
+  core.info(JSON.stringify(params))
 
   try {
     const result = await ec2.runInstances(params).promise();
