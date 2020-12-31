@@ -8,8 +8,9 @@ async function startEc2Instance(label, githubRegistrationToken) {
   const userData = [
     '#!/bin/bash',
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
-    'amazon-linux-extras install docker',
-    'service docker start',
+    'amazon-linux-extras install docker -y',
+    'systemctl enable docker',
+    'systemctl start docker',
     'mkdir /actions-runner && cd /actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
     'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
