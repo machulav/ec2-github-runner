@@ -5,16 +5,21 @@ const config = require('./config');
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
+  // user data scripts are run as the root user
+  // Docker is required for running Docker container actions
   const userData = [
     '#!/bin/bash',
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
-    'mkdir /actions-runner && cd /actions-runner',
+    'yum update -y',
+    'yum install docker -y',
+    'yum install git -y',
+    'service docker start',
+    'mkdir actions-runner && cd actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
     'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
-    'useradd github',
-    'chown -R github:github /actions-runner',
-    `su github -c "./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}"`,
-    'su github -c "./run.sh"',
+    'export RUNNER_ALLOW_RUNASROOT=1',
+    `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+    './run.sh',
   ];
 
   const params = {
