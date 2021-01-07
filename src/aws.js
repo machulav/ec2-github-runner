@@ -12,6 +12,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
     'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
     'yum update -y',
     'yum install docker -y',
+    'yum install git -y',
     'service docker start',
     'mkdir actions-runner && cd actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
