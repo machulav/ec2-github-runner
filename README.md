@@ -19,6 +19,7 @@ And all this automatically as a part of your GitHub Actions workflow.
   - [Environment variables](#environment-variables)
   - [Outputs](#outputs)
   - [Example](#example)
+  - [Real user examples](#real-user-examples)
 - [Self-hosted runner security with public repositories](#self-hosted-runner-security-with-public-repositories)
 - [License Summary](#license-summary)
 
@@ -205,6 +206,12 @@ jobs:
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
 ```
+
+### Real user examples
+
+In [this discussion](https://github.com/machulav/ec2-github-runner/discussions/19), you can find feedback and examples from the users of the action.
+
+If you use this action in your workflow, feel free to add your story there as well 🙌
 
 ## Self-hosted runner security with public repositories
 
