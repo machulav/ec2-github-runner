@@ -7,6 +7,8 @@ And all this automatically as a part of your GitHub Actions workflow.
 
 ![GitHub Actions self-hosted EC2 runner](docs/images/github-actions-summary.png)
 
+See [below](#example) the YAML code of the depicted workflow. <br><br>
+
 **Table of Contents**
 
 - [Use cases](#use-cases)
@@ -58,31 +60,33 @@ EC2 self-hosted runner will handle everything else so that you will pay for it t
 
 Use the following steps to prepare your workflow for running on your EC2 self-hosted runner:
 
-**1. Prepare AWS access keys**
+**1. Prepare IAM user with AWS access keys**
 
-1. Create new AWS access keys with the following least-privilege permissions.
+1. Create new AWS access keys for the new or an existing IAM user with the following least-privilege permissions.
    The action will use the keys for EC2 instance management in the AWS account.
 
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:RunInstances",
-        "ec2:TerminateInstances",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+   ```
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "ec2:RunInstances",
+           "ec2:TerminateInstances",
+           "ec2:DescribeInstances",
+           "ec2:DescribeInstanceStatus"
+         ],
+         "Resource": "*"
+       }
+     ]
+   }
+   ```
+
+   The policy can be limited even more by specifying the resources you use.
 
 2. Add the keys to GitHub secrets.
-3. Use the [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) action to put the keys into environment variables.
+3. Use the [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) action to set up the keys as environment variables.
 
 **2. Prepare GitHub personal access token**
 
@@ -101,10 +105,8 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 1. Create a new VPC and a new subnet in it.
    Or use the existing VPC and subnet.
 2. Create a new security group for the runners in the VPC.
-   The runner doesn't require any inbound traffic.
-   However, outbound traffic for port 443 should be allowed so the runner can pull GitHub Actions' tasks.
-
-Note: Make sure your EC2 instance has access to the internet in order to connect to GitHub Actions and pull the tasks.
+   Only the outbound traffic on port 443 should be allowed for pulling jobs from GitHub.
+   No inbound traffic is required.
 
 **5. Configure the GitHub workflow**
 
@@ -119,12 +121,12 @@ Now you're ready to go!
 
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                              | Description                                                                                                                                                                                                                         |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use:<br>- `start` - to start a new runner;<br>- `stop` - to stop the previously created runner.                                                                                                 |
+| `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner.                                                                                             |
 | `github-token`                                                                                                                                                               | Always required.                      | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                        |
-| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. The action is compatible with Amazon Linux 2 images.                                                                                                  |
+| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. <br><br> The action is compatible with Amazon Linux 2 images.                                                                                         |
 | `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                                                  |
-| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.                                                                                                                                            |
-| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet.                                                                                                                           |
+| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. <br><br> The subnet should belong to the same VPC as the specified security group.                                                                                                                                   |
+| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet. <br><br> Only the outbound traffic for port 443 should be allowed. No inbound traffic is required.                        |
 | `label`                                                                                                                                                                      | Required if you use the `stop` mode.  | Name of the unique label assigned to the runner. <br><br> The label is provided by the output of the action in the `start` mode. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore. |
 | `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.  | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                    |
 
