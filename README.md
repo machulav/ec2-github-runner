@@ -91,9 +91,24 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 **3. Prepare EC2 image**
 
-1. Create a new EC2 image (AMI) based on Amazon Linux 2.
-   You don't need to install anything special beforehand into the AMI.
-   The action will install all the necessary tools during the EC2 instance creation.
+1. Create a new EC2 instance based on any Linux distribution you need.
+2. Connect to the instance using SSH, install `docker` and `git`, then enable `docker` service.
+
+   For Amazon Linux 2, it looks like the following:
+
+   ```
+    sudo yum update -y
+    sudo yum install docker -y
+    sudo yum install git -y
+    sudo systemctl start docker
+    sudo systemctl enable docker
+   ```
+
+   For other Linux distributions, it could be slightly different.
+
+3. Install any other tools required for your workflow.
+4. Create a new EC2 image (AMI) from the instance.
+5. Remove the instance if not required anymore after the image is created.
 
 **4. Prepare VPC with subnet and security group**
 
@@ -120,7 +135,7 @@ Now you're ready to go!
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use:<br>- `start` - to start a new runner;<br>- `stop` - to stop the previously created runner.                                                                                                 |
 | `github-token`                                                                                                                                                               | Always required.                      | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                        |
-| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. The action is compatible with Amazon Linux 2 images.                                                                                                  |
+| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id. <br><br> The new runner will be launched from this image. The action is compatible with Amazon Linux 2 images.                                                                                                        |
 | `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                                                  |
 | `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.                                                                                                                                            |
 | `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet.                                                                                                                           |
