@@ -102,10 +102,9 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
    For Amazon Linux 2, it looks like the following:
 
    ```
-    sudo yum update -y
-    sudo yum install docker -y
-    sudo yum install git -y
-    sudo systemctl start docker
+    sudo yum update -y && \
+    sudo yum install docker -y && \
+    sudo yum install git -y && \
     sudo systemctl enable docker
    ```
 
