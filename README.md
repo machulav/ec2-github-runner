@@ -96,9 +96,23 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 **3. Prepare EC2 image**
 
-1. Create a new EC2 image (AMI) based on Amazon Linux 2.
-   You don't need to install anything special beforehand into the AMI.
-   The action will install all the necessary tools during the EC2 instance creation.
+1. Create a new EC2 instance based on any Linux distribution you need.
+2. Connect to the instance using SSH, install `docker` and `git`, then enable `docker` service.
+
+   For Amazon Linux 2, it looks like the following:
+
+   ```
+    sudo yum update -y && \
+    sudo yum install docker -y && \
+    sudo yum install git -y && \
+    sudo systemctl enable docker
+   ```
+
+   For other Linux distributions, it could be slightly different.
+
+3. Install any other tools required for your workflow.
+4. Create a new EC2 image (AMI) from the instance.
+5. Remove the instance if not required anymore after the image is created.
 
 **4. Prepare VPC with subnet and security group**
 

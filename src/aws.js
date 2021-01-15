@@ -5,15 +5,10 @@ const config = require('./config');
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
-  // user data scripts are run as the root user
-  // Docker is required for running Docker container actions
+  // User data scripts are run as the root user.
+  // Docker and git are necessary for GitHub runner and should be pre-installed on the AMI.
   const userData = [
     '#!/bin/bash',
-    'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
-    'yum update -y',
-    'yum install docker -y',
-    'yum install git -y',
-    'service docker start',
     'mkdir actions-runner && cd actions-runner',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
     'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
