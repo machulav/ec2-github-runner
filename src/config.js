@@ -12,6 +12,7 @@ class Config {
       securityGroupId: core.getInput('security-group-id'),
       label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
+      iamRoleName: core.getInput('iam-role-name'),
     };
 
     // the values of github.context.repo.owner and github.context.repo.repo are taken from
