@@ -51,7 +51,7 @@ inputs:
     required: false
   iam-role-name:
     description: >-
-      IAM Role Name to attach to the created runner.
+      IAM Role Name to attach to the created EC2 runner.
       This requires additional permissions on the AWS role used to launch instances.
     required: false
 outputs:

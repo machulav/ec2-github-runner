@@ -83,27 +83,25 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
    }
    ```
 
-   If you plan to attach an IAM role to the EC2 agent with the iam-role-name parameter, you will need to allow additional actions.
+   If you plan to attach an IAM role to the EC2 runner with the `iam-role-name` parameter, you will need to allow additional permissions.
 
    ```
    {
     "Version": "2012-10-17",
     "Statement": [
       {
-        "Sid": "",
         "Effect": "Allow",
         "Action": [
-          "ec2:TerminateInstances",
           "ec2:RunInstances",
-          "ec2:ReplaceIamInstanceProfileAssociation",
+          "ec2:TerminateInstances",
           "ec2:DescribeInstances",
           "ec2:DescribeInstanceStatus",
+          "ec2:ReplaceIamInstanceProfileAssociation",
           "ec2:AssociateIamInstanceProfile"
         ],
         "Resource": "*"
       },
       {
-        "Sid": "",
         "Effect": "Allow",
         "Action": "iam:PassRole",
         "Resource": "*"
@@ -111,8 +109,8 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
     ]
    }
    ```
-   This example policy is provided as a guide. It can and most likely should be limited even more by specifying the resources you use.
 
+   This example policy is provided as a guide. It can and most likely should be limited even more by specifying the resources you use.
 
 2. Add the keys to GitHub secrets.
 3. Use the [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) action to set up the keys as environment variables.
@@ -162,17 +160,17 @@ Now you're ready to go!
 
 ### Inputs
 
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                              | Description                                                                                                                                                                                                                         |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`                                                                                                                                                                       | Always required.                      | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner.                                                                                             |
-| `github-token`                                                                                                                                                               | Always required.                      | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                        |
-| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode. | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. <br><br> The action is compatible with Amazon Linux 2 images.                                                                                         |
-| `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Instance Type.                                                                                                                                                                                                                  |
-| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode. | VPC Subnet Id. <br><br> The subnet should belong to the same VPC as the specified security group.                                                                                                                                   |
-| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode. | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet. <br><br> Only the outbound traffic for port 443 should be allowed. No inbound traffic is required.                        |
-| `label`                                                                                                                                                                      | Required if you use the `stop` mode.  | Name of the unique label assigned to the runner. <br><br> The label is provided by the output of the action in the `start` mode. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore. |
-| `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.  | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                    |
-| `iam-role-name`                                                                                                                                                            | Optional.  | IAM role name to attach to the created runner. <br><br> This allows the runner to have permissions to run additional actions within the aws account, without having to manage additional github secrets and aws users.                      |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                                   | Description                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`                                                                                                                                                                       | Always required.                           | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner.                                                                                             |
+| `github-token`                                                                                                                                                               | Always required.                           | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                        |
+| `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode.      | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. <br><br> The action is compatible with Amazon Linux 2 images.                                                                                         |
+| `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode.      | EC2 Instance Type.                                                                                                                                                                                                                  |
+| `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode.      | VPC Subnet Id. <br><br> The subnet should belong to the same VPC as the specified security group.                                                                                                                                   |
+| `security-group-id`                                                                                                                                                          | Required if you use the `start` mode.      | EC2 Security Group Id. <br><br> The security group should belong to the same VPC as the specified subnet. <br><br> Only the outbound traffic for port 443 should be allowed. No inbound traffic is required.                        |
+| `label`                                                                                                                                                                      | Required if you use the `stop` mode.       | Name of the unique label assigned to the runner. <br><br> The label is provided by the output of the action in the `start` mode. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore. |
+| `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.       | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                    |
+| `iam-role-name`                                                                                                                                                              | Optional. Used only with the `start` mode. | IAM role name to attach to the created EC2 runner. <br><br> This allows the runner to have permissions to run additional actions within the AWS account, without having to manage additional GitHub secrets and AWS users.          |
 
 ### Environment variables
 
