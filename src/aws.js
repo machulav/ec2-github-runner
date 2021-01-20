@@ -10,8 +10,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
   const userData = [
     '#!/bin/bash',
     'mkdir actions-runner && cd actions-runner',
-    'curl -O -L https://github.com/actions/runner/releases/download/v2.274.2/actions-runner-linux-x64-2.274.2.tar.gz',
-    'tar xzf ./actions-runner-linux-x64-2.274.2.tar.gz',
+    'curl -O -L https://github.com/actions/runner/releases/download/v2.275.1/actions-runner-linux-x64-2.275.1.tar.gz',
+    'tar xzf ./actions-runner-linux-x64-2.275.1.tar.gz',
     'export RUNNER_ALLOW_RUNASROOT=1',
     `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     './run.sh',
