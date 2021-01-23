@@ -52,7 +52,7 @@ async function removeRunner() {
 }
 
 async function waitForRunnerCreated(label) {
-  const timeoutMinutes = 10;
+  const timeoutMinutes = 5;
   const retryIntervalSeconds = 1;
   let waitSeconds = 0;
 
@@ -62,7 +62,8 @@ async function waitForRunnerCreated(label) {
 
       if (waitSeconds > timeoutMinutes * 60) {
         core.error('GitHub self-hosted runner creation error');
-        reject(`Timeout of ${timeoutMinutes} minutes is exceeded`);
+        clearInterval(interval);
+        reject(`A timeout of ${timeoutMinutes} minutes is exceeded. Please ensure your EC2 instance has access to the Internet.`);
       }
 
       if (runner && runner.status === 'online') {
