@@ -1,5 +1,8 @@
-on: pull_request
 name: PR automations
+on:
+  pull_request:
+    branches:
+      - main
 jobs:
   lint-code:
     name: Lint code
@@ -24,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
       - name: Cache dependencies
         uses: actions/cache@v2
         with:
@@ -38,4 +43,4 @@ jobs:
           git config --global user.name "GitHub Actions"
           git add dist/
           git commit -m "Update dist" || echo "No changes to commit"
-          git push origin main
+          git push origin ${{ github.head_ref }}
