@@ -53,8 +53,13 @@ async function removeRunner() {
 
 async function waitForRunnerCreated(label) {
   const timeoutMinutes = 5;
-  const retryIntervalSeconds = 1;
+  const retryIntervalSeconds = 10;
+  const quietPeriodSeconds = 30;
   let waitSeconds = 0;
+
+  core.info(`Waiting ${quietPeriodSeconds} seconds before polling for runner.`);
+  await new Promise(r => setTimeout(r, quietPeriodSeconds * 1000));
+  core.info(`Beginning to poll for runner every ${retryIntervalSeconds}`);
 
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
@@ -72,6 +77,7 @@ async function waitForRunnerCreated(label) {
         resolve();
       } else {
         waitSeconds += retryIntervalSeconds;
+        core.info('Waiting...');
       }
     }, retryIntervalSeconds * 1000);
   });
