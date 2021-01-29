@@ -57,9 +57,9 @@ async function waitForRunnerCreated(label) {
   const quietPeriodSeconds = 30;
   let waitSeconds = 0;
 
-  core.info(`Waiting ${quietPeriodSeconds} seconds before polling for runner.`);
+  core.info(`Waiting ${quietPeriodSeconds}s before polling for runner`);
   await new Promise(r => setTimeout(r, quietPeriodSeconds * 1000));
-  core.info(`Beginning to poll for runner every ${retryIntervalSeconds}`);
+  core.info(`Polling for runner every ${retryIntervalSeconds}s`);
 
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
