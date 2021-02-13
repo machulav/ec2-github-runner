@@ -36,10 +36,12 @@ For example, you can access your database in the private subnet to run the datab
 
 ### Customize hardware configuration
 
-Some of your CI workloads may require more powerful hardware that GitHub-hosted runners provide.
+GitHub provides one fixed hardware configuration for their Linux virtual machines: 2-core CPU, 7 GB of RAM, 14 GB of SSD disk space.
+
+Some of your CI workloads may require more powerful hardware than GitHub-hosted runners provide.
 In the action, you can configure any EC2 instance type for your runner that AWS provides.
 
-For example, you may run c5.4xlarge EC2 runner for some of your compute-intensive workloads.
+For example, you may run a c5.4xlarge EC2 runner for some of your compute-intensive workloads.
 Or r5.xlarge EC2 runner for workloads that process large data sets in memory.
 
 ### Save costs
