@@ -1,5 +1,7 @@
 # On-demand self-hosted AWS EC2 runner for GitHub Actions
 
+[![awesome-runners](https://img.shields.io/badge/listed%20on-awesome--runners-blue.svg)](https://github.com/jonico/awesome-runners)
+
 Start your EC2 [self-hosted runner](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners) right before you need it.
 Run the job on it.
 Finally, stop it when you finish.
