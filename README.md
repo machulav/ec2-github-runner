@@ -246,8 +246,8 @@ jobs:
           iam-role-name: my-role-name # optional, requires additional permissions
           aws-resource-tags: > # optional, requires additional permissions
             [
-              {"Key": "Name", "Value": "ec2-github-runner"}
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "Name", "Value": "ec2-github-runner"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
             ]
   do-the-job:
     name: Do the job on the runner
