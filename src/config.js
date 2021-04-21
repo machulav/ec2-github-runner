@@ -13,6 +13,7 @@ class Config {
       label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
+      cpuArchitecture: core.getInput('cpu-architecture'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

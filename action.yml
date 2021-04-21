@@ -61,6 +61,11 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  cpu-architecture:
+    description: >-
+      CPU architecture: x64, arm, arm64
+    required: false
+    default: x64
 outputs:
   label:
     description: >-
