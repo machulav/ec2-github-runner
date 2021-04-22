@@ -13,6 +13,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
     'curl -O -L https://github.com/actions/runner/releases/download/v2.275.1/actions-runner-linux-x64-2.275.1.tar.gz',
     'tar xzf ./actions-runner-linux-x64-2.275.1.tar.gz',
     'export RUNNER_ALLOW_RUNASROOT=1',
+    'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
     `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     './run.sh',
   ];
@@ -69,7 +70,7 @@ async function waitForInstanceRunning(ec2InstanceId) {
     core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
     return;
   } catch (error) {
-    core.error(`AWS EC2 instance ${ec2InstanceId} init error`);
+    core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
     throw error;
   }
 }
