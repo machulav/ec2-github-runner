@@ -15,6 +15,22 @@ inputs:
     description: >-
       GitHub Personal Access Token with the 'repo' scope assigned.
     required: true
+  ec2-image-filters:
+    description: >-
+      Filters to lookup for the AMI image.
+      Example: '[{"Name": "name", "Values": ["amzn2-ami-hvm-2.0.????????-x86_64-gp2"]}]'
+    required: false
+    default: '[]'
+  ec2-image-owner:
+    description: >-
+      Scopes the results to images with the specified owners. You can specify a combination of AWS account IDs, 'self', 'amazon', and 'aws-marketplace'.
+      If you omit this parameter, the results include all images for which you have launch permissions, regardless of ownership.
+      Works in conjunction with 'ec2-image-filters'
+    required: false
+  eip-allocation-id:
+    description: >-
+      Allows to associate the specified Elastic IP address with the runner instance
+    required: false
   ec2-image-id:
     description: >-
       EC2 Image Id (AMI). The new runner will be launched from this image.

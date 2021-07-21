@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
+const { sortByCreationDate } = require('./utils');
 
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
@@ -19,6 +20,31 @@ async function startEc2Instance(label, githubRegistrationToken) {
     './run.sh',
   ];
 
+  if (!config.input.ec2ImageId) {
+    const amiParams = {
+      Filters: [
+        ...config.input.ec2ImageFilters,
+        {
+          Name: 'state',
+          Values: [
+            'available'
+          ]
+        },
+      ]
+    };
+    if (config.input.ec2ImageOwner) {
+      amiParams.Owners = [ config.input.ec2ImageOwner ];
+    }
+
+    const result = await ec2.describeImages(amiParams).promise();
+    if (result.Images.length === 0) {
+      throw new Error('Unable to find AMI using passed filter');
+    }
+    sortByCreationDate(result);
+
+    config.input.ec2ImageId = result.Images[0].ImageId;
+  }
+
   const params = {
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
@@ -31,15 +57,30 @@ async function startEc2Instance(label, githubRegistrationToken) {
     TagSpecifications: config.tagSpecifications,
   };
 
+  let ec2InstanceId;
   try {
     const result = await ec2.runInstances(params).promise();
-    const ec2InstanceId = result.Instances[0].InstanceId;
+    ec2InstanceId = result.Instances[0].InstanceId;
     core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
   } catch (error) {
     core.error('AWS EC2 instance starting error');
     throw error;
   }
+
+  if (config.input.eipAllocationId) {
+    const params = {
+      AllocationId: config.input.eipAllocationId,
+      InstanceId: ec2InstanceId,
+    };
+
+    try {
+      await ec2.associateAddress(params).promise();
+    } catch (error) {
+      core.warning(`Elastic IP association error, trying to proceed w/o EIP: ${error.name}`);
+    }
+  }
+
+  return ec2InstanceId;
 }
 
 async function terminateEc2Instance() {
