@@ -61,6 +61,10 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  runner-home-dir:
+    description: >-
+      Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
+    required: false
 outputs:
   label:
     description: >-
