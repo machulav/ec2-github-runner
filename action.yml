@@ -63,7 +63,7 @@ inputs:
     default: '[]'
   associate-public-ip:
     description: >-
-      Associate a public IP with the instance at launch? NOTE: requires a publicly routable subnet.
+      Associate an ephemeral public IPv4 address with the instance at launch? NOTE: requires a publicly routable subnet.
     required: false
     default: false
 outputs:
