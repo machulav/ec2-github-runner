@@ -61,6 +61,11 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  associate-public-ip:
+    description: >-
+      Associate a public IP with the instance at launch? NOTE: requires a publicly routable subnet.
+    required: false
+    default: false
 outputs:
   label:
     description: >-
