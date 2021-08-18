@@ -32,12 +32,12 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
-  if (config.runnerHomeDir) {
+  if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     return [
       '#!/bin/bash',
-      `cd "${config.runnerHomeDir}"`,
+      `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
