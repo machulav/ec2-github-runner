@@ -61,6 +61,11 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  use-spot-instances:
+    description: >-
+      Use spot instances for cost savings?
+    default: false
+    required: false
 outputs:
   label:
     description: >-
