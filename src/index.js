@@ -7,14 +7,29 @@ function setOutput(label, ec2InstanceId) {
   core.setOutput('label', label);
   core.setOutput('ec2-instance-id', ec2InstanceId);
 }
+function setBatchOutput(instancesDetail) {
+  core.setOutput('instancesDetail', instancesDetail);
+}
 
-async function start() {
+async function startInstance() {
   const label = config.generateUniqueLabel();
   const githubRegistrationToken = await gh.getRegistrationToken();
   const ec2InstanceId = await aws.startEc2Instance(label, githubRegistrationToken);
-  setOutput(label, ec2InstanceId);
   await aws.waitForInstanceRunning(ec2InstanceId);
   await gh.waitForRunnerRegistered(label);
+  return {label, ec2InstanceId};
+}
+
+async function start() {
+  const {label, ec2InstanceId} = await startInstance();
+  setOutput(label, ec2InstanceId);
+}
+
+async function startBatch(names) {
+  core.info('got names', names);
+  const instancesDetail = await Promise.allSettled(names.map(start))
+  core.info(instancesDetail)
+  setBatchOutput(instancesDetail);
 }
 
 async function stop() {
@@ -24,7 +39,21 @@ async function stop() {
 
 (async function () {
   try {
-    config.input.mode === 'start' ? await start() : await stop();
+    switch (config.input.mode) {
+      case 'start' :
+        await start();
+        break;
+      case 'stop':
+        await stop();
+        break;
+      case 'start_batch':
+        await startBatch(config.input.batchNames);
+        break;
+      default:
+        core.error('Unsupported mode {config.input.mode}')
+    }
+
+
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);
