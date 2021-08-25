@@ -61,6 +61,12 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  batch-names:
+    description: >-
+      Names of batch instances to start
+      Used to associate different instances
+    required: false
+    default: '[]'
 outputs:
   label:
     description: >-
