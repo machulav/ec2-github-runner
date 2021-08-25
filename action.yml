@@ -10,6 +10,7 @@ inputs:
       Specify here which mode you want to use:
         - 'start' - to start a new runner;
         - 'stop' - to stop the previously created runner.
+        - 'start_batch' - to start a batch of new runners;
     required: true
   github-token:
     description: >-
