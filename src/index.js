@@ -26,8 +26,12 @@ async function start() {
 }
 
 async function startBatch(names) {
-  core.info('got names', names);
-  const instancesDetail = await Promise.allSettled(names.map(start))
+  core.info(names);
+  core.info(typeof(names))
+  const namesArray = JSON.parse(names)
+  core.info(typeof(namesArray))
+
+  const instancesDetail = await Promise.allSettled(namesArray.map(start))
   core.info(instancesDetail)
   setBatchOutput(instancesDetail);
 }
