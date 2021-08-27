@@ -2,22 +2,38 @@ const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
 
+// User data scripts are run as the root user
+function buildUserDataScript(githubRegistrationToken, label) {
+  if (config.input.runnerHomeDir) {
+    // If runner home directory is specified, we expect the actions-runner software (and dependencies)
+    // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
+    return [
+      '#!/bin/bash',
+      `cd "${config.input.runnerHomeDir}"`,
+      'export RUNNER_ALLOW_RUNASROOT=1',
+      'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      './run.sh',
+    ];
+  } else {
+    return [
+      '#!/bin/bash',
+      'mkdir actions-runner && cd actions-runner',
+      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+      'curl -O -L https://github.com/actions/runner/releases/download/v2.278.0/actions-runner-linux-${RUNNER_ARCH}-2.278.0.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.278.0.tar.gz',
+      'export RUNNER_ALLOW_RUNASROOT=1',
+      'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      './run.sh',
+    ];
+  }
+}
+
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
-  // User data scripts are run as the root user.
-  // Docker and git are necessary for GitHub runner and should be pre-installed on the AMI.
-  const userData = [
-    '#!/bin/bash',
-    'mkdir actions-runner && cd actions-runner',
-    'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-    'curl -O -L https://github.com/actions/runner/releases/download/v2.278.0/actions-runner-linux-${RUNNER_ARCH}-2.278.0.tar.gz',
-    'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.278.0.tar.gz',
-    'export RUNNER_ALLOW_RUNASROOT=1',
-    'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
-    `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-    './run.sh',
-  ];
+  const userData = buildUserDataScript(githubRegistrationToken, label);
 
   const params = {
     ImageId: config.input.ec2ImageId,
