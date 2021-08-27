@@ -2,34 +2,6 @@ const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
 
-async function startEc2Instance(label, githubRegistrationToken) {
-  const ec2 = new AWS.EC2();
-
-  const userData = buildUserDataScript(githubRegistrationToken, label);
-
-  const params = {
-    ImageId: config.input.ec2ImageId,
-    InstanceType: config.input.ec2InstanceType,
-    MinCount: 1,
-    MaxCount: 1,
-    UserData: Buffer.from(userData.join('\n')).toString('base64'),
-    SubnetId: config.input.subnetId,
-    SecurityGroupIds: [config.input.securityGroupId],
-    IamInstanceProfile: { Name: config.input.iamRoleName },
-    TagSpecifications: config.tagSpecifications,
-  };
-
-  try {
-    const result = await ec2.runInstances(params).promise();
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
-  } catch (error) {
-    core.error('AWS EC2 instance starting error');
-    throw error;
-  }
-}
-
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
   if (config.input.runnerHomeDir) {
@@ -55,6 +27,34 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
     ];
+  }
+}
+
+async function startEc2Instance(label, githubRegistrationToken) {
+  const ec2 = new AWS.EC2();
+
+  const userData = buildUserDataScript(githubRegistrationToken, label);
+
+  const params = {
+    ImageId: config.input.ec2ImageId,
+    InstanceType: config.input.ec2InstanceType,
+    MinCount: 1,
+    MaxCount: 1,
+    UserData: Buffer.from(userData.join('\n')).toString('base64'),
+    SubnetId: config.input.subnetId,
+    SecurityGroupIds: [config.input.securityGroupId],
+    IamInstanceProfile: { Name: config.input.iamRoleName },
+    TagSpecifications: config.tagSpecifications,
+  };
+
+  try {
+    const result = await ec2.runInstances(params).promise();
+    const ec2InstanceId = result.Instances[0].InstanceId;
+    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
+    return ec2InstanceId;
+  } catch (error) {
+    core.error('AWS EC2 instance starting error');
+    throw error;
   }
 }
 
