@@ -71,6 +71,10 @@ inputs:
       All runners get the same GitHub label.
     required: false
     default: 1
+  ec2-launch-template:
+    description: >-
+      EC2 launch template name. A launch template may be used to specify AMI, instance type etc parameters
+    required: false
 outputs:
   label:
     description: >-
