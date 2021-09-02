@@ -15,6 +15,7 @@ class Config {
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
       runnerCount: core.getInput('runner-count'),
+      ec2LaunchTemplate: core.getInput('ec2-launch-template'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -44,7 +45,9 @@ class Config {
     }
 
     if (this.input.mode === 'start') {
-      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId) {
+      const isSet = param => param;
+      const params = [this.input.ec2ImageId, this.input.ec2InstanceType, this.input.subnetId, this.input.securityGroupId];
+      if (!this.input.ec2LaunchTemplate && !params.every(isSet)) {
         throw new Error(`Not all the required inputs are provided for the 'start' mode`);
       }
     } else if (this.input.mode === 'stop') {

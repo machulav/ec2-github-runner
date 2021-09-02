@@ -49,6 +49,12 @@ async function startEc2Instance(label, githubRegistrationToken) {
     TagSpecifications: config.tagSpecifications,
   };
 
+  if (config.input.ec2LaunchTemplate) {
+    params.LaunchTemplate = {
+      LaunchTemplateName: config.input.ec2LaunchTemplate
+    };
+  }
+
   try {
     const result = await ec2.runInstances(params).promise();
     const ec2InstanceIds = result.Instances.map(x => x.InstanceId).join();
