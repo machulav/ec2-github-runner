@@ -10,6 +10,8 @@ inputs:
       Specify here which mode you want to use:
         - 'start' - to start a new runner;
         - 'stop' - to stop the previously created runner.
+        - 'start_batch' - to start a batch of new runners;
+        - 'stop_batch' - to stop a batch of runners;
     required: true
   github-token:
     description: >-
@@ -61,6 +63,17 @@ inputs:
       for example: '[{"Key": "TagKey1", "Value": "TagValue1"}, {"Key": "TagKey2", "Value": "TagValue2"}]'
     required: false
     default: '[]'
+  batch-names:
+    description: >-
+      Names of batch instances to start
+      Used to associate different instances
+    required: false
+    default: '[]'
+  ec2-instances-detail:
+    description: >-
+      Names and details of batch instances to stop
+    required: false
+    default: '[]'
 outputs:
   label:
     description: >-
@@ -72,6 +85,10 @@ outputs:
     description: >-
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
+  instancesDetail:
+    description: >-
+      EC2 Instance Id and label for each created runner.
+      Array of objects
 runs:
   using: node12
   main: ./dist/index.js

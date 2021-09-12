@@ -13,6 +13,8 @@ class Config {
       label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
+      batchNames: core.getInput('batch-names'),
+      ec2InstancesDetail: core.getInput('ec2-instances-detail')
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -49,8 +51,17 @@ class Config {
       if (!this.input.label || !this.input.ec2InstanceId) {
         throw new Error(`Not all the required inputs are provided for the 'stop' mode`);
       }
+    } else if (this.input.mode === 'start_batch') {
+      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId || !this.input.batchNames) {
+        throw new Error(`Not all the required inputs are provided for the 'start_batch' mode`);
+      }
+    } else if (this.input.mode === 'stop_batch') {
+      if (!this.input.ec2InstancesDetail) {
+        throw new Error(`Not all the required inputs are provided for the 'stop_batch' mode`);
+      }
     } else {
-      throw new Error('Wrong mode. Allowed values: start, stop.');
+      core.info(this.input.mode)
+      throw new Error('Wrong mode. Allowed values: start, stop, start_batch, stop_batch.');
     }
   }
 
