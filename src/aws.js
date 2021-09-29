@@ -6,10 +6,12 @@ const runnerVersion = '2.283.1'
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
+  const userData = [];
+
   if (config.input.ec2BaseOs === 'win-x64') {
-    const userData = [
-      '<powershell>'
-    ];
+    userData.push(
+      '<powershell>',
+    );
 
     if (config.input.runnerHomeDir) {
       userData.push(
@@ -27,8 +29,6 @@ function buildUserDataScript(githubRegistrationToken, label) {
       './run.cmd',
       '</powershell>',
     );
-
-    return userData;
   }
   else if (config.input.ec2BaseOs === 'linux-x64' || config.input.ec2BaseOs === 'linux-arm' || config.input.ec2BaseOs === 'linux-arm64'){
     const userData = [
@@ -52,9 +52,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
     );
-
-    return userData;
   }
+
+  return userData;
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
