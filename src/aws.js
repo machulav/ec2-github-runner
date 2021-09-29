@@ -2,31 +2,58 @@ const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
 
+const runnerVersion = '2.283.1'
+
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
-  if (config.input.runnerHomeDir) {
-    // If runner home directory is specified, we expect the actions-runner software (and dependencies)
-    // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
-    return [
+  if (config.input.ec2BaseOs === 'win-x64') {
+    const userData = [
+      '<powershell>'
+    ];
+
+    if (config.input.runnerHomeDir) {
+      userData.push(
+        `cd "${config.input.runnerHomeDir}"`,
+      );
+    } else {
+      userData.push(
+        'mkdir actions-runner; cd actions-runner',
+        `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-win-x64-${runnerVersion}.zip -OutFile actions-runner-win-x64-${runnerVersion}.zip`,
+        `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${runnerVersion}.zip", "$PWD")`,
+      );
+    }
+    userData.push(
+      `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      './run.cmd',
+      '</powershell>',
+    );
+
+    return userData;
+  }
+  else if (config.input.ec2BaseOs === 'linux-x64' || config.input.ec2BaseOs === 'linux-arm' || config.input.ec2BaseOs === 'linux-arm64'){
+    const userData = [
       '#!/bin/bash',
-      `cd "${config.input.runnerHomeDir}"`,
+    ];
+
+    if (config.input.runnerHomeDir) {
+      userData.push(
+        `cd "${config.input.runnerHomeDir}"`,
+      );
+    } else {
+      userData.push(
+        'mkdir actions-runner && cd actions-runner',
+        `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-${config.input.ec2BaseOs}-${runnerVersion}.tar.gz`,
+        `tar xzf ./actions-runner-linux-${config.input.ec2BaseOs}-${runnerVersion}.tar.gz`,
+      );
+    }
+    userData.push(
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
-    ];
-  } else {
-    return [
-      '#!/bin/bash',
-      'mkdir actions-runner && cd actions-runner',
-      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.280.3/actions-runner-linux-${RUNNER_ARCH}-2.280.3.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.280.3.tar.gz',
-      'export RUNNER_ALLOW_RUNASROOT=1',
-      'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh',
-    ];
+    );
+
+    return userData;
   }
 }
 

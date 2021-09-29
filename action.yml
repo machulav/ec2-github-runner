@@ -25,6 +25,15 @@ inputs:
       EC2 Instance Type. 
       This input is required if you use the 'start' mode.
     required: false
+  ec2-base-os:
+    description: >-
+      Base OS type of the EC2 image (AMI). The new runner needs to be configured based on OS and architecture:
+        - 'win-x64'
+        - 'linux-x64'
+        - 'linux-arm'
+        - 'linux-arm64'
+      This input is required if you use the 'start' mode.
+    required: false
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
@@ -32,7 +41,7 @@ inputs:
     required: false
   security-group-id:
     description: >-
-      EC2 Security Group Id. 
+      EC2 Security Group Id. ß
       The security group should belong to the same VPC as the specified subnet.
       The runner doesn't require any inbound traffic. However, outbound traffic should be allowed.
       This input is required if you use the 'start' mode.

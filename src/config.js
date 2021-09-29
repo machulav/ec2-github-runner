@@ -12,6 +12,7 @@ class Config {
       securityGroupId: core.getInput('security-group-id'),
       label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
+      ec2BaseOs: core.getInput('ec2-base-os'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
     };
@@ -43,7 +44,7 @@ class Config {
     }
 
     if (this.input.mode === 'start') {
-      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId) {
+      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.ec2BaseOs || !this.input.subnetId || !this.input.securityGroupId) {
         throw new Error(`Not all the required inputs are provided for the 'start' mode`);
       }
     } else if (this.input.mode === 'stop') {
@@ -52,6 +53,10 @@ class Config {
       }
     } else {
       throw new Error('Wrong mode. Allowed values: start, stop.');
+    }
+
+    if (this.input.ec2BaseOs === 'win-x64' || this.input.ec2BaseOs !== 'linux-x64' || this.input.ec2BaseOs !== 'linux-arm' || this.input.ec2BaseOs !== 'linux-arm64') {
+      throw new Error(`Wrong base-os. Allowed values: win-x64, linux-x64, linux-arm or linux-arm64.`);
     }
   }
 
