@@ -55,7 +55,7 @@ class Config {
       throw new Error('Wrong mode. Allowed values: start, stop.');
     }
 
-    if (this.input.ec2BaseOs === 'win-x64' || this.input.ec2BaseOs !== 'linux-x64' || this.input.ec2BaseOs !== 'linux-arm' || this.input.ec2BaseOs !== 'linux-arm64') {
+    if (this.input.ec2BaseOs !== 'win-x64' && this.input.ec2BaseOs !== 'linux-x64' && this.input.ec2BaseOs !== 'linux-arm' && this.input.ec2BaseOs !== 'linux-arm64') {
       throw new Error(`Wrong base-os. Allowed values: win-x64, linux-x64, linux-arm or linux-arm64.`);
     }
   }

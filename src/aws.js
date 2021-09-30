@@ -20,10 +20,11 @@ function buildUserDataScript(githubRegistrationToken, label) {
     } else {
       userData.push(
         'mkdir actions-runner; cd actions-runner',
-        `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-win-x64-${runnerVersion}.zip -OutFile actions-runner-win-x64-${runnerVersion}.zip`,
-        `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${runnerVersion}.zip", "$PWD")`,
+        `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-${config.input.ec2BaseOs}-${runnerVersion}.zip -OutFile actions-runner-win-x64-${runnerVersion}.zip`,
+        `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-${config.input.ec2BaseOs}-${runnerVersion}.zip", "$PWD")`,
       );
     }
+    
     userData.push(
       `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.cmd',
@@ -31,9 +32,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
     );
   }
   else if (config.input.ec2BaseOs === 'linux-x64' || config.input.ec2BaseOs === 'linux-arm' || config.input.ec2BaseOs === 'linux-arm64'){
-    const userData = [
+    userData.push(
       '#!/bin/bash',
-    ];
+    );
 
     if (config.input.runnerHomeDir) {
       userData.push(
@@ -42,16 +43,19 @@ function buildUserDataScript(githubRegistrationToken, label) {
     } else {
       userData.push(
         'mkdir actions-runner && cd actions-runner',
-        `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-${config.input.ec2BaseOs}-${runnerVersion}.tar.gz`,
+        `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-${config.input.ec2BaseOs}-${runnerVersion}.tar.gz`,
         `tar xzf ./actions-runner-linux-${config.input.ec2BaseOs}-${runnerVersion}.tar.gz`,
       );
     }
+
     userData.push(
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
     );
+  } else {
+    core.error('Not supported ec2-base-os.');
   }
 
   return userData;
