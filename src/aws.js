@@ -12,7 +12,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      'export INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)',
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --name "$INSTANCE_ID" --labels ${label}`,
       './run.sh',
     ];
   } else {
@@ -24,7 +25,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.280.3.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      'export INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)',
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --name "$INSTANCE_ID" --labels ${label}`,
       './run.sh',
     ];
   }
