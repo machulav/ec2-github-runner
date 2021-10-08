@@ -65,6 +65,11 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  runner-count:
+    description: >-
+      The number of runners to start. All runner get the same label.
+    required: false
+    default: 1
 outputs:
   label:
     description: >-
