@@ -31,24 +31,30 @@ async function getRegistrationToken() {
   }
 }
 
+// remove all runners with the input label
 async function removeRunner() {
-  const runner = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
 
-  // skip the runner removal process if the runner is not found
-  if (!runner) {
-    core.info(`GitHub self-hosted runner with label ${config.input.label} is not found, so the removal is skipped`);
+  // find all runners with our label
+  const allRunners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+  const runners = _.filter(allRunners, { labels: [{ name: config.input.label }] });
+
+  // skip the runner removal process if the runners are not found
+  if (runners.length < 1) {
+    core.info(`GitHub self-hosted runner(s) with label ${config.input.label} not found, so the removal is skipped`);
     return;
   }
 
-  try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
-    core.info(`GitHub self-hosted runner ${runner.name} is removed`);
-    return;
-  } catch (error) {
-    core.error('GitHub self-hosted runner removal error');
-    throw error;
+  for (let runner of runners) {
+    try {
+      await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+      core.info(`GitHub self-hosted runner ${runner.name} (${runner.id}) is removed`);
+    } catch (error) {
+      core.error(`GitHub self-hosted runner ${runner.name} (${runner.id}) removal error`);
+      throw error;
+    }
   }
+  return;
 }
 
 async function waitForRunnerRegistered(label) {

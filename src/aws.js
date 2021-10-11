@@ -51,9 +51,9 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   try {
     const result = await ec2.runInstances(params).promise();
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
+    const ec2InstanceIds = result.Instances.map(x => x.InstanceId).join();
+    core.info(`AWS EC2 instance ${ec2InstanceIds} started`);
+    return ec2InstanceIds;
   } catch (error) {
     core.error('AWS EC2 instance starting error');
     throw error;
@@ -64,7 +64,7 @@ async function terminateEc2Instance() {
   const ec2 = new AWS.EC2();
 
   const params = {
-    InstanceIds: [config.input.ec2InstanceId],
+    InstanceIds: config.input.ec2InstanceId.split(/\s*,\s*/),
   };
 
   try {
@@ -81,7 +81,7 @@ async function waitForInstanceRunning(ec2InstanceId) {
   const ec2 = new AWS.EC2();
 
   const params = {
-    InstanceIds: [ec2InstanceId],
+    InstanceIds: ec2InstanceId.split(/\s*,\s*/),
   };
 
   try {
