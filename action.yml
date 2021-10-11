@@ -67,13 +67,14 @@ inputs:
     required: false
   runner-count:
     description: >-
-      The number of runners to start. All runner get the same label.
+      The number of runners to start.
+      All runners get the same GitHub label.
     required: false
     default: 1
 outputs:
   label:
     description: >-
-      Name of the unique label assigned to the runner.
+      Name of the unique label assigned to the runner(s).
       The label is used in two cases:
       - to use as the input of 'runs-on' property for the following jobs;
       - to remove the runner from GitHub when it is not needed anymore.
@@ -81,6 +82,7 @@ outputs:
     description: >-
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
+      If multiple instances were started using runner-count, this will be a comma seperated list of ids.
 runs:
   using: node12
   main: ./dist/index.js
