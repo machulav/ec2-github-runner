@@ -32,7 +32,7 @@ async function getRegistrationToken() {
 }
 
 // remove all runners with the input label
-async function removeRunner() {
+async function removeRunners() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   // find all runners with our label
@@ -91,6 +91,6 @@ async function waitForRunnerRegistered(label) {
 
 module.exports = {
   getRegistrationToken,
-  removeRunner,
+  removeRunners,
   waitForRunnerRegistered,
 };
