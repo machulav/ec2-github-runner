@@ -45,14 +45,18 @@ async function removeRunners() {
     return;
   }
 
+  let failed = 0;
   for (let runner of runners) {
     try {
       await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
       core.info(`GitHub self-hosted runner ${runner.name} (${runner.id}) is removed`);
     } catch (error) {
-      core.error(`GitHub self-hosted runner ${runner.name} (${runner.id}) removal error`);
-      throw error;
+      core.error(`GitHub self-hosted runner ${runner.name} (${runner.id}) removal error: ${error}`);
+      failed++;
     }
+  }
+  if (failed > 0) {
+    throw `Failed to shutdown ${failed} of ${runners.length} GitHub self-hosted runners`;
   }
   return;
 }
