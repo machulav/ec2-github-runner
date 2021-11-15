@@ -22,7 +22,7 @@ async function stop() {
   await gh.removeRunner();
 }
 
-async function main() {
+(async function () {
   const MAX_ATTEMPTS = Number.parseInt(core.getInput('max_attempts'));
   let attempt = 1;
   let hasSucceeded = false;
@@ -42,6 +42,4 @@ async function main() {
       }
     }
   } while (attempt !== MAX_ATTEMPTS && !hasSucceeded);
-}
-
-main();
+})();
