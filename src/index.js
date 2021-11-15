@@ -22,11 +22,26 @@ async function stop() {
   await gh.removeRunner();
 }
 
-(async function () {
-  try {
-    config.input.mode === 'start' ? await start() : await stop();
-  } catch (error) {
-    core.error(error);
-    core.setFailed(error.message);
-  }
-})();
+async function main() {
+  const MAX_ATTEMPTS = Number.parseInt(core.getInput('max_attempts'));
+  let attempt = 1;
+  let hasSucceeded = false;
+  do {
+    try {
+      config.input.mode === 'start' ? await start() : await stop();
+      hasSucceeded = true;
+    } catch (error) {
+      attempt += 1;
+      if (attempt === MAX_ATTEMPTS) {
+        core.error('Max attempts exceeded');
+        core.error(error);
+        core.setFailed(error.message);
+      } else {
+        core.warning(`${error} - ${error.message}`);
+        core.info(`Attempt ${attempt} of ${MAX_ATTEMPTS}`);
+      }
+    }
+  } while (attempt !== MAX_ATTEMPTS && !hasSucceeded);
+}
+
+main();
