@@ -4,6 +4,8 @@ const config = require('./config');
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
+  const runnerVersion = "2.284.0";
+
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
@@ -13,21 +15,39 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh',
+      './run.sh'
     ];
-  } else {
+  } else if (!config.input.numRunners || Number(config.input.numRunners) === 1) {
     return [
       '#!/bin/bash',
       'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.280.3/actions-runner-linux-${RUNNER_ARCH}-2.280.3.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.280.3.tar.gz',
+      'curl -O -L https://github.com/actions/runner/releases/download/v'+runnerVersion+'/actions-runner-linux-${RUNNER_ARCH}-'+runnerVersion+'.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh',
+      'tar xzf ../actions-runner-linux-${RUNNER_ARCH}-'+runnerVersion+'.tar.gz',
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ${label}-$i`,
+      './run.sh'
     ];
   }
+  const lines = [
+    '#!/bin/bash',
+    'mkdir actions-runner && cd actions-runner',
+    'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+    'curl -O -L https://github.com/actions/runner/releases/download/v'+runnerVersion+'/actions-runner-linux-${RUNNER_ARCH}-'+runnerVersion+'.tar.gz',
+    'export RUNNER_ALLOW_RUNASROOT=1',
+    'export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
+  ];
+  for (var i = 1; i <= Number(config.input.numRunners) && i <= 32; i++) {
+    lines.push(`mkdir ${i} && cd ${i}`);
+    lines.push('tar xzf ../actions-runner-linux-${RUNNER_ARCH}-'+runnerVersion+'.tar.gz');
+    lines.push(`./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ${label}-${i}`);
+    lines.push('mkdir _work');
+    lines.push('sudo ./svc.sh install');
+    lines.push('sudo ./svc.sh start');
+    lines.push('cd ..');
+  }
+  return lines;
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
