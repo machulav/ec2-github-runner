@@ -24,7 +24,7 @@ async function stop() {
 
 (async function () {
   const MAX_ATTEMPTS = Number.parseInt(core.getInput('max_attempts'));
-  let attempt = 1;
+  let attempt = 0;
   let hasSucceeded = false;
   do {
     try {
