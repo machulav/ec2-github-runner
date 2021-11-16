@@ -41,5 +41,5 @@ async function stop() {
         core.info(`Attempt ${attempt} of ${MAX_ATTEMPTS}`);
       }
     }
-  } while (attempt !== MAX_ATTEMPTS && !hasSucceeded);
+  } while (attempt < MAX_ATTEMPTS && !hasSucceeded);
 })();
