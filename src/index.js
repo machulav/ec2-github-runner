@@ -32,7 +32,7 @@ async function stop() {
       hasSucceeded = true;
     } catch (error) {
       attempt += 1;
-      if (attempt === MAX_ATTEMPTS) {
+      if (attempt >= MAX_ATTEMPTS) {
         core.error('Max attempts exceeded');
         core.error(error);
         core.setFailed(error.message);
