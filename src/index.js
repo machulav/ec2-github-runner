@@ -32,12 +32,13 @@ async function stop() {
       hasSucceeded = true;
     } catch (error) {
       attempt += 1;
-      core.warning(`${error} - ${error.message}`);
       core.warning(`Attempt ${attempt} of ${MAX_ATTEMPTS}`);
       if (attempt >= MAX_ATTEMPTS) {
         core.error('Max attempts exceeded');
         core.error(error);
         core.setFailed(error.message);
+      } else {
+        core.warning(`${error} - ${error.message}`);
       }
     }
   } while (attempt < MAX_ATTEMPTS && !hasSucceeded);
