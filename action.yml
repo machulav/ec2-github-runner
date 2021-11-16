@@ -65,6 +65,10 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  max_attempts:
+    description: Number of attempts. Default is 1
+    required: false
+    default: 1
 outputs:
   label:
     description: >-
