@@ -39,6 +39,8 @@ async function stop() {
         core.setFailed(error.message);
       } else {
         core.warning(`${error} - ${error.message}`);
+        core.info('Waiting 5 seconds before retrying');
+        await sleep(5000);
       }
     }
   } while (attempt < MAX_ATTEMPTS && !hasSucceeded);
