@@ -26,7 +26,7 @@ async function getRegistrationToken() {
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
-    core.error('GitHub Registration Token receiving error');
+    // core.error('GitHub Registration Token receiving error');
     throw error;
   }
 }
@@ -46,7 +46,7 @@ async function removeRunner() {
     core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {
-    core.error('GitHub self-hosted runner removal error');
+    // core.error('GitHub self-hosted runner removal error');
     throw error;
   }
 }
@@ -58,7 +58,7 @@ async function waitForRunnerRegistered(label) {
   let waitSeconds = 0;
 
   core.info(`Waiting ${quietPeriodSeconds}s for the AWS EC2 instance to be registered in GitHub as a new self-hosted runner`);
-  await new Promise(r => setTimeout(r, quietPeriodSeconds * 1000));
+  await new Promise((r) => setTimeout(r, quietPeriodSeconds * 1000));
   core.info(`Checking every ${retryIntervalSeconds}s if the GitHub self-hosted runner is registered`);
 
   return new Promise((resolve, reject) => {
@@ -66,9 +66,11 @@ async function waitForRunnerRegistered(label) {
       const runner = await getRunner(label);
 
       if (waitSeconds > timeoutMinutes * 60) {
-        core.error('GitHub self-hosted runner registration error');
+        // core.error('GitHub self-hosted runner registration error');
         clearInterval(interval);
-        reject(`A timeout of ${timeoutMinutes} minutes is exceeded. Your AWS EC2 instance was not able to register itself in GitHub as a new self-hosted runner.`);
+        reject(
+          `A timeout of ${timeoutMinutes} minutes is exceeded. Your AWS EC2 instance was not able to register itself in GitHub as a new self-hosted runner.`
+        );
       }
 
       if (runner && runner.status === 'online') {
