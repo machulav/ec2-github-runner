@@ -38,7 +38,7 @@ async function stop() {
         core.error(error);
         core.setFailed(error.message);
       } else {
-        core.warning(`${error} - ${error.message}`);
+        core.warning(`${error}`);
         core.info('Waiting 5 seconds before retrying');
         await new Promise((resolve) => setTimeout(resolve, 10000));
       }
