@@ -43,12 +43,13 @@ inputs:
       The label is used to remove the runner from GitHub when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
-  ec2-instance-id:
+  ec2-instance-ids:
     description: >-
-      EC2 Instance Id of the created runner.
-      The id is used to terminate the EC2 instance when the runner is not needed anymore.
+      EC2 Instance Id(s) of the created runner(s).
+      The Id(s) are used to terminate the EC2 instance(s) when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
+    default: 'null'
   iam-role-name:
     description: >-
       IAM Role Name to attach to the created EC2 instance.
@@ -65,6 +66,11 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  runner-count:
+    description: >-
+      Number of instances to create.
+    required: false
+    default: '1'
 outputs:
   label:
     description: >-
@@ -72,9 +78,9 @@ outputs:
       The label is used in two cases:
       - to use as the input of 'runs-on' property for the following jobs;
       - to remove the runner from GitHub when it is not needed anymore.
-  ec2-instance-id:
+  ec2-instance-ids:
     description: >-
-      EC2 Instance Id of the created runner.
+      EC2 Instance Id(s) of the created runner(s).
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
 runs:
   using: node12
