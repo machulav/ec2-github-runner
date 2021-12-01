@@ -27,7 +27,8 @@ inputs:
     required: false
   subnet-id:
     description: >-
-      VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
+      VPC Subnet Id. You may provide a comma-separated list of subnet ids to try multiple subnets.
+      The subnet should belong to the same VPC as the specified security group.
       This input is required if you use the 'start' mode.
     required: false
   security-group-id:
