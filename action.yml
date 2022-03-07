@@ -54,6 +54,12 @@ inputs:
       IAM Role Name to attach to the created EC2 instance.
       This requires additional permissions on the AWS role used to launch instances.
     required: false
+  block-device-mappings:
+    description: >-
+      EC2 instance ebs block device mapping
+      for example: '[{ "DeviceName": "/dev/sda1", "Ebs": { "DeleteOnTermination": true, "VolumeSize": 20, "VolumeType": "gp2"}}]'
+    required: false
+    default: '[]'
   aws-resource-tags:
     description: >-
       Tags to attach to the launched EC2 instance and volume.
