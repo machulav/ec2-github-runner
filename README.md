@@ -143,6 +143,17 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 2. Add the keys to GitHub secrets.
 3. Use the [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) action to set up the keys as environment variables.
+4. You can also specify optional EBS mapping for tasks that utilizes more storage space.
+   `[
+              {
+                  "DeviceName": "/dev/sda1",
+                  "Ebs": {
+                      "DeleteOnTermination": true,
+                      "VolumeSize": 40,
+                      "VolumeType": "gp2"
+                  }
+              }
+            ]`
 
 **2. Prepare GitHub personal access token**
 
@@ -200,6 +211,7 @@ Now you're ready to go!
 | `label`                                                                                                                                                                      | Required if you use the `stop` mode.       | Name of the unique label assigned to the runner. <br><br> The label is provided by the output of the action in the `start` mode. <br><br> The label is used to remove the runner from GitHub when the runner is not needed anymore.                                                                                                   |
 | `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.       | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                                                                                                                      |
 | `iam-role-name`                                                                                                                                                              | Optional. Used only with the `start` mode. | IAM role name to attach to the created EC2 runner. <br><br> This allows the runner to have permissions to run additional actions within the AWS account, without having to manage additional GitHub secrets and AWS users. <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above). |
+| `block-device-mappings`                                                                                                                                                      | Optional. Use when more disk space is required | `[{ "DeviceName": "/dev/sda1", "Ebs": { "DeleteOnTermination": true, "VolumeSize": 20, "VolumeType": "gp2"}}]`                                                                                                                                                                                                                    |
 | `aws-resource-tags`                                                                                                                                                          | Optional. Used only with the `start` mode. | Specifies tags to add to the EC2 instance and any attached storage. <br><br> This field is a stringified JSON array of tag objects, each containing a `Key` and `Value` field (see example below). <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above).                         |
 | `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
 
