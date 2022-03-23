@@ -52,8 +52,8 @@ async function removeRunner() {
 }
 
 async function waitForRunnerRegistered(label) {
-  const timeoutMinutes = 5;
-  const retryIntervalSeconds = 10;
+  const timeoutMinutes = 1;
+  const retryIntervalSeconds = 20;
   const quietPeriodSeconds = 30;
   let waitSeconds = 0;
 
