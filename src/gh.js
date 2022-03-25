@@ -1,16 +1,17 @@
 const core = require('@actions/core');
-const { GitHub, getOctokitOptions } = require('@actions/github/lib/utils');
+const { Octokit } = require('@actions/rest');
+const { getOctokitOptions } = require('@actions/github/lib/utils');
 const retry = require('@octokit/plugin-retry');
 const throttling = require('@octokit/plugin-throttling');
 const _ = require('lodash');
 const config = require('./config');
 
-const Octokit = GitHub.plugin(retry, throttling);
 let octokit;
 
 function getOctokit(token) {
   if (!octokit) {
-    octokit = new Octokit(getOctokitOptions(token, {
+    const ConfiguredOctokit = Octokit.plugin(retry, throttling);
+    octokit = new ConfiguredOctokit(getOctokitOptions(token, {
       request: {
         retries: 2,
       },
