@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const { Octokit } = require('@actions/rest');
+const { Octokit } = require('@octokit/rest');
 const { getOctokitOptions } = require('@actions/github/lib/utils');
 const retry = require('@octokit/plugin-retry');
 const throttling = require('@octokit/plugin-throttling');
