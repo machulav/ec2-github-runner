@@ -19,6 +19,8 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
+    "@octokit/plugin-retry": "^3.0.9",
+    "@octokit/plugin-throttling": "^3.6.2",
     "aws-sdk": "^2.809.0",
     "lodash": "^4.17.21"
   },

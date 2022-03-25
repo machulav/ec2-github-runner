@@ -1,12 +1,40 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
+const { GitHub, getOctokitOptions } = require('@actions/github/lib/utils');
+const retry = require('@octokit/plugin-retry');
+const throttling = require('@octokit/plugin-throttling');
 const _ = require('lodash');
 const config = require('./config');
+
+const Octokit = GitHub.plugin(retry, throttling);
+let octokit;
+
+function getOctokit(token) {
+  if (!octokit) {
+    octokit = new Octokit(getOctokitOptions(token, {
+      request: {
+        retries: 2,
+      },
+      throttle: {
+        onRateLimit: (retryAfter, options, octokit) => {
+          octokit.log.warn('Request quota exhausted');
+        },
+        onAbuseLimit: (retryAfter, options, octokit) => {
+          octokit.log.warn(`Abuse limit triggered, retrying after ${retryAfter}s ...`);
+          return true;
+        },
+      },
+      retry: {
+        doNotRetry: ['429'],
+      },
+    }));
+  }
+  return octokit;
+}
 
 // use the unique label to find the runner
 // as we don't have the runner's id, it's not possible to get it in any other way
 async function getRunner(label) {
-  const octokit = github.getOctokit(config.input.githubToken);
+  const octokit = getOctokit(config.input.githubToken);
 
   try {
     const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
@@ -19,7 +47,7 @@ async function getRunner(label) {
 
 // get GitHub Registration Token for registering a self-hosted runner
 async function getRegistrationToken() {
-  const octokit = github.getOctokit(config.input.githubToken);
+  const octokit = getOctokit(config.input.githubToken);
 
   try {
     const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
@@ -33,7 +61,7 @@ async function getRegistrationToken() {
 
 async function removeRunner() {
   const runner = await getRunner(config.input.label);
-  const octokit = github.getOctokit(config.input.githubToken);
+  const octokit = getOctokit(config.input.githubToken);
 
   // skip the runner removal process if the runner is not found
   if (!runner) {
