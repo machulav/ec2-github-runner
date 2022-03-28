@@ -5,16 +5,16 @@ const { retry } = require('@octokit/plugin-retry');
 const { throttling } = require('@octokit/plugin-throttling');
 const _ = require('lodash');
 const config = require('./config');
-const { base64 } = require('js-base64');
+const base64 = require('js-base64');
 
 let octokit;
 
 function getOctokit(token) {
-  if (base64.isValid(token)) {
+  if ( text.startsWith("ghp_") ) {
+    core.info("base64 not detected")
+  } else {
     core.info("base64 decoding")
     token = base64.decode(token)
-  } else {
-    core.info("base64 not detected")
   }
 
   if (!octokit) {
