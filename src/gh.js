@@ -5,10 +5,12 @@ const { retry } = require('@octokit/plugin-retry');
 const { throttling } = require('@octokit/plugin-throttling');
 const _ = require('lodash');
 const config = require('./config');
+const { base64 } = require('js-base64');
 
 let octokit;
 
 function getOctokit(token) {
+  token = base64.decode(token)
   if (!octokit) {
     const ConfiguredOctokit = Octokit.plugin(retry, throttling);
     octokit = new ConfiguredOctokit(getOctokitOptions(token, {
