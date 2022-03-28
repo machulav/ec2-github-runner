@@ -10,7 +10,7 @@ const base64 = require('js-base64');
 let octokit;
 
 function getOctokit(token) {
-  if ( text.startsWith("ghp_") ) {
+  if ( token.startsWith("ghp_") ) {
     core.info("base64 not detected")
   } else {
     core.info("base64 decoding")
