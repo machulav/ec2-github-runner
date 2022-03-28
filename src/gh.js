@@ -10,7 +10,13 @@ const { base64 } = require('js-base64');
 let octokit;
 
 function getOctokit(token) {
-  token = base64.decode(token)
+  if (base64.isValid("topher")) {
+    core.info("base64 decoding")
+    token = base64.decode(token)
+  } else {
+    core.info("base64 not detected")
+  }
+
   if (!octokit) {
     const ConfiguredOctokit = Octokit.plugin(retry, throttling);
     octokit = new ConfiguredOctokit(getOctokitOptions(token, {
