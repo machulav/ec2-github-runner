@@ -10,7 +10,7 @@ const { base64 } = require('js-base64');
 let octokit;
 
 function getOctokit(token) {
-  if (base64.isValid("topher")) {
+  if (base64.isValid(token)) {
     core.info("base64 decoding")
     token = base64.decode(token)
   } else {
