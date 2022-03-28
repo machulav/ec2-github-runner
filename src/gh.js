@@ -15,6 +15,8 @@ function getOctokit(token) {
   } else {
     core.info("base64 decoding")
     token = base64.decode(token)
+    // looks like ghp_XXXXXXX\n
+    token = token.trim()
   }
 
   if (!octokit) {
