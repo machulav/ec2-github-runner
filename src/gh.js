@@ -13,7 +13,7 @@ function getOctokit(token) {
     const ConfiguredOctokit = Octokit.plugin(retry, throttling);
     octokit = new ConfiguredOctokit(getOctokitOptions(token, {
       request: {
-        retries: 2,
+        retries: 4,
       },
       throttle: {
         onRateLimit: (retryAfter, options, octokit) => {
@@ -81,7 +81,7 @@ async function removeRunner() {
 }
 
 async function waitForRunnerRegistered(label) {
-  const timeoutMinutes = 2;
+  const timeoutMinutes = 5;
   const retryIntervalSeconds = 20;
   const quietPeriodSeconds = 30;
   let waitSeconds = 0;
