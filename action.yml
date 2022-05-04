@@ -65,6 +65,14 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  operating-system:
+    description: >-
+      The operating system of the EC2 launched instance.
+      Options:
+        - 'linux'
+        - 'windows'
+    required: false
+    default: 'linux'
 outputs:
   label:
     description: >-
