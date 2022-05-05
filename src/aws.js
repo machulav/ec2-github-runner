@@ -32,14 +32,15 @@ async function buildUserDataScript(githubRegistrationToken, label) {
     ];
   } else if (config.input.operatingSystem === 'windows') {
     return [
+      '<powershell>',
       'mkdir actions-runner; cd actions-runner',
-      '$wc = New-Object net.webclient',
       `$source = 'https://github.com/actions/runner/releases/download/v${version}/actions-runner-win-x64-${version}.zip'`,
       `$destination = 'actions-runner-win-x64-${version}.zip'`,
       `Start-BitsTransfer -Source $source -Destination $destination`,
       `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${version}.zip", "$PWD")`,
       `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
       './run.cmd',
+      '</powershell>'
     ];
   } else if (config.input.operatingSystem === 'linux') {
     return [
