@@ -38,7 +38,7 @@ async function buildUserDataScript(githubRegistrationToken, label) {
       'Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-$env:RUNNER_VERSION.zip", "$PWD")',
       `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.cmd',
-    ]
+    ];
   } else if (config.input.operatingSystem === 'linux') {
     return [
       '#!/bin/bash',
