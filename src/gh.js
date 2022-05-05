@@ -80,7 +80,6 @@ async function waitForRunnerRegistered(label) {
       } else {
         waitSeconds += retryIntervalSeconds;
         core.info('Checking...');
-        core.info('ugh');
       }
     }, retryIntervalSeconds * 1000);
   });
