@@ -15,7 +15,6 @@ async function getLatest() {
   return jsonResponse['tag_name'].replace('v', '');
 }
 
-
 // User data scripts are run as the root user
 async function buildUserDataScript(githubRegistrationToken, label) {
   const version = await getLatest();
