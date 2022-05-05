@@ -67,12 +67,17 @@ inputs:
     required: false
   operating-system:
     description: >-
-      The operating system of the EC2 launched instance.
+      The operating system of the launched EC2 instance.
       Options:
         - 'linux'
         - 'windows'
     required: false
     default: 'linux'
+  timeout-minutes:
+    description: >-
+      Minutes to wait for the launched EC2 instance to timeout.
+    required: false
+    default: 5
 outputs:
   label:
     description: >-
