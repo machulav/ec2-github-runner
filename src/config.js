@@ -57,14 +57,13 @@ class Config {
     }
 
     if (this.input.operatingSystem !== null) {
-      core.info(`OS: ${this.input.operatingSystem}`)
       if (this.input.operatingSystem.toLowerCase() !== 'linux' && this.input.operatingSystem.toLowerCase() !== 'windows') {
         throw new Error('Supported operating systems are "linux" or "windows".');
       }
     }
 
-    if (typeof this.input.timeoutMinutes !== 'number') {
-      throw new Error('Timeout minutes needs to be a number.')
+    if (Number.isInteger(this.input.timeoutMinutes === false)) {
+      throw new Error('Timeout minutes needs to be a number.');
     }
   }
 
