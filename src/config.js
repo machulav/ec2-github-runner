@@ -57,7 +57,7 @@ class Config {
     }
 
     if (this.input.operatingSystem !== null) {
-      core.info(`OS: ${input.operatingSystem}`)
+      core.info(`OS: ${this.input.operatingSystem}`)
       if (this.input.operatingSystem.toLowerCase() !== 'linux' && this.input.operatingSystem.toLowerCase() !== 'windows') {
         throw new Error('Supported operating systems are "linux" or "windows".');
       }
