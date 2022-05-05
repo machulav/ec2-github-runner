@@ -33,8 +33,10 @@ async function buildUserDataScript(githubRegistrationToken, label) {
   } else if (config.input.operatingSystem === 'windows') {
     return [
       'mkdir actions-runner; cd actions-runner',
-      `$env:RUNNER_VERSION=${version}`,
-      `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v$env:RUNNER_VERSION/actions-runner-win-x64-$env:RUNNER_VERSION.zip -OutFile actions-runner-win-x64-$env:RUNNER_VERSION.zip`,
+      // `$env:RUNNER_VERSION=${version}`,
+      '$wc = New-Object net.webclient',
+      `$wc.Downloadfile(https://github.com/actions/runner/releases/download/v${version}/actions-runner-win-x64-${version}.zip, actions-runner-win-x64-${version}.zip)`,
+      // `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v$env:RUNNER_VERSION/actions-runner-win-x64-$env:RUNNER_VERSION.zip -OutFile actions-runner-win-x64-$env:RUNNER_VERSION.zip`,
       'Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-$env:RUNNER_VERSION.zip", "$PWD")',
       `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.cmd',
