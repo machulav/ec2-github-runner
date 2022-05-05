@@ -36,7 +36,7 @@ async function buildUserDataScript(githubRegistrationToken, label) {
       // `$env:RUNNER_VERSION=${version}`,
       '$wc = New-Object net.webclient',
       `$source = 'https://github.com/actions/runner/releases/download/v${version}/actions-runner-win-x64-${version}.zip'`,
-      `$destination = 'actions-runner-win-x64-${version}.zip'`
+      `$destination = 'actions-runner-win-x64-${version}.zip'`,
       `Start-BitsTransfer -Source $source -Destination $destination`,
       // `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v$env:RUNNER_VERSION/actions-runner-win-x64-$env:RUNNER_VERSION.zip -OutFile actions-runner-win-x64-$env:RUNNER_VERSION.zip`,
       `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${version}.zip", "$PWD")`,
