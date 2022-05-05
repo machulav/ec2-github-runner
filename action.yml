@@ -1,6 +1,6 @@
-name: On-demand self-hosted AWS EC2 runner for GitHub Actions
+name: AWS EC2 - GitHub - ZR QB Testing
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
-author: Volodymyr Machula
+author: Volodymyr Machula - Zachary Rohrbach
 branding:
   icon: 'box'
   color: 'orange'
