@@ -17,7 +17,7 @@ async function getLatest() {
 
 
 // User data scripts are run as the root user
-await function buildUserDataScript(githubRegistrationToken, label) {
+async function buildUserDataScript(githubRegistrationToken, label) {
   const version = await getLatest();
 
   if (config.input.runnerHomeDir) {
