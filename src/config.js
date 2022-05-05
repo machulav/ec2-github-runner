@@ -32,9 +32,6 @@ class Config {
       repo: github.context.repo.repo,
     };
 
-    // ECHO
-    core.info(`TIMEOUT: ${this.timeoutMinutes}`)
-
     //
     // validate input
     //
