@@ -45,11 +45,11 @@ class Config {
     }
 
     if (this.input.mode === 'start') {
-      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.ec2BaseOs || !this.input.subnetId || !this.input.securityGroupId) {
+      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.ec2Os || !this.input.subnetId || !this.input.securityGroupId) {
         throw new Error(`Not all the required inputs are provided for the 'start' mode`);
       }
-      if (this.input.ec2BaseOs !== 'win-x64' && this.input.ec2BaseOs !== 'linux-x64' && this.input.ec2BaseOs !== 'linux-arm' && this.input.ec2BaseOs !== 'linux-arm64') {
-        throw new Error(`Wrong base-os. Allowed values: win-x64, linux-x64, linux-arm or linux-arm64.`);
+      if (this.input.ec2Os !== 'windows' && this.input.ec2Os !== 'linux') {
+        throw new Error(`Wrong ec2-os. Allowed values: windows or linux.`);
       }
     } else if (this.input.mode === 'stop') {
       if (!this.input.label || !this.input.ec2InstanceId) {
