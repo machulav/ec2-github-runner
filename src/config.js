@@ -12,7 +12,7 @@ class Config {
       securityGroupId: core.getInput('security-group-id'),
       label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
-      ec2BaseOs: core.getInput('ec2-base-os'),
+      ec2Os: core.getInput('ec2-os'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
       awsKeyPairName: core.getInput('aws-key-pair-name'),

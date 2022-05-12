@@ -25,15 +25,13 @@ inputs:
       EC2 Instance Type. 
       This input is required if you use the 'start' mode.
     required: false
-  ec2-base-os:
+  ec2-os:
      description: >-
        Base OS type of the EC2 image (AMI). The new runner needs to be configured based on OS and architecture:
-         - 'win-x64'
-         - 'linux-x64'
-         - 'linux-arm'
-         - 'linux-arm64'
-       This input is required if you use the 'start' mode.
+         - 'windows'
+         - 'linux'
      required: false
+     default: linux
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
