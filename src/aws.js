@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
 
-const runnerVersion = '2.283.1'
+const runnerVersion = '2.291.1'
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
