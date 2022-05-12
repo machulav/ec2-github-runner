@@ -74,6 +74,10 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  aws-key-pair-name:
+    description: >-
+      The AWS Key Pair Name to be associated to the instance
+    required: false
 outputs:
   label:
     description: >-

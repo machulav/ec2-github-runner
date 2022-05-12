@@ -15,6 +15,7 @@ class Config {
       ec2BaseOs: core.getInput('ec2-base-os'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
+      awsKeyPairName: core.getInput('aws-key-pair-name'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

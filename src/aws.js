@@ -28,9 +28,10 @@ function buildUserDataScript(githubRegistrationToken, label) {
     }
     
     userData.push(
-      `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
       './run.cmd',
       '</powershell>',
+      '<persist>false</persist>',
     );
   }
   else if (config.input.ec2BaseOs === 'linux-x64' || config.input.ec2BaseOs === 'linux-arm' || config.input.ec2BaseOs === 'linux-arm64'){
@@ -82,6 +83,10 @@ async function startEc2Instance(label, githubRegistrationToken) {
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
   };
+
+  if (config.input.awsKeyPairName) {
+    params['KeyName'] = config.input.awsKeyPairName
+  }
 
   try {
     const result = await ec2.runInstances(params).promise();
