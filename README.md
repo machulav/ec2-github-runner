@@ -157,7 +157,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    For Amazon Linux 2, it looks like the following:
 
-   ```
+   ```.shell
     sudo yum update -y && \
     sudo yum install docker -y && \
     sudo yum install git -y && \
@@ -165,6 +165,22 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
    ```
 
    For other Linux distributions, it could be slightly different.
+
+   For a Windows server instance, it looks like the following:
+
+   Note: This must be done over RDP since `choco install git` doesn't seem to install correctly over a session manager
+   connection
+
+   ```.ps1
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   choco install git
+   
+   # Remove existing user data run once file (this is so that the user-data being set on instance start actually runs).
+   rm C:\ProgramData\Amazon\EC2Launch\state\.run-once
+   ```
+   Note: The `.run-once` file needs to be deleted with every start of the instance you are snapshotting.
+   If you stop and reboot the instance a few times please make sure you delete the `.run-once` file before creating the 
+   AMI.
 
 3. Install any other tools required for your workflow.
 4. Create a new EC2 image (AMI) from the instance.
