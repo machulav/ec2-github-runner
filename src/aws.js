@@ -17,6 +17,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   } else {
     return [
       '#!/bin/bash',
+      'apt-get update && apt-get install -y nfs-common',
       'mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 fs-0f9f29caae5ade69c.efs.eu-west-1.amazonaws.com:/ /mnt',
       'test -d /mnt/$(ec2metadata --instance-id) || install -d -o root -g root -m 0755 /mnt/$(ec2metadata --instance-id)',
       'umount /mnt',
