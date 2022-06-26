@@ -29,7 +29,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'curl -O -L https://github.com/actions/runner/releases/download/v2.286.0/actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --replace`,
       './run.sh',
     ];
   }
