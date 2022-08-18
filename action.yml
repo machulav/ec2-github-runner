@@ -65,6 +65,10 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  ec2-launch-template:
+    description: >-
+      EC2 launch template name. See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html#create-launch-template.
+    required: false
 outputs:
   label:
     description: >-

@@ -4,16 +4,17 @@ const github = require('@actions/github');
 class Config {
   constructor() {
     this.input = {
-      mode: core.getInput('mode'),
-      githubToken: core.getInput('github-token'),
-      ec2ImageId: core.getInput('ec2-image-id'),
-      ec2InstanceType: core.getInput('ec2-instance-type'),
-      subnetId: core.getInput('subnet-id'),
-      securityGroupId: core.getInput('security-group-id'),
-      label: core.getInput('label'),
-      ec2InstanceId: core.getInput('ec2-instance-id'),
-      iamRoleName: core.getInput('iam-role-name'),
+      mode: core.getInput('mode', { required: true }),
+      githubToken: core.getInput('github-token', { required: true }),
+      ec2ImageId: core.getInput('ec2-image-id', { required: false }),
+      ec2InstanceType: core.getInput('ec2-instance-type', { required: false }),
+      subnetId: core.getInput('subnet-id', { required: false }),
+      securityGroupId: core.getInput('security-group-id', { required: false }),
+      label: core.getInput('label', { required: false }),
+      ec2InstanceId: core.getInput('ec2-instance-id', { required: false }),
+      iamRoleName: core.getInput('iam-role-name', { required: false }),
       runnerHomeDir: core.getInput('runner-home-dir', { required: false }) || 'actions-runner',
+      ec2LaunchTemplate: core.getInput('ec2-launch-template', { required: false }),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -43,7 +44,7 @@ class Config {
     }
 
     if (this.input.mode === 'start') {
-      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId) {
+      if (!this.input.ec2LaunchTemplate && (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId)) {
         throw new Error(`Not all the required inputs are provided for the 'start' mode`);
       }
     } else if (this.input.mode === 'stop') {

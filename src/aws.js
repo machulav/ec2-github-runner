@@ -25,17 +25,19 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
-  const params = {
-    ImageId: config.input.ec2ImageId,
-    InstanceType: config.input.ec2InstanceType,
-    MinCount: 1,
-    MaxCount: 1,
-    UserData: Buffer.from(userData.join('\n')).toString('base64'),
-    SubnetId: config.input.subnetId,
-    SecurityGroupIds: [config.input.securityGroupId],
-    IamInstanceProfile: { Name: config.input.iamRoleName },
-    TagSpecifications: config.tagSpecifications,
-  };
+  const params = Object.assign({},
+    config.input.ec2ImageId && { ImageId: config.input.ec2ImageId },
+    config.input.ec2InstanceType && { InstanceType: config.input.ec2InstanceType },
+    config.input.subnetId && { SubnetId: config.input.subnetId },
+    config.input.securityGroupId && { SecurityGroupIds: [config.input.securityGroupId] },
+    config.input.iamRoleName && { IamInstanceProfile: { Name: config.input.iamRoleName } },
+    config.tagSpecifications && { TagSpecifications: config.tagSpecifications },
+    config.input.ec2LaunchTemplate && { LaunchTemplate: { LaunchTemplateName: config.input.ec2LaunchTemplate } },
+
+    { UserData: Buffer.from(userData.join('\n')).toString('base64') },
+    { MinCount: 1} ,
+    { MaxCount: 1 },
+  );
 
   try {
     const result = await ec2.runInstances(params).promise();
