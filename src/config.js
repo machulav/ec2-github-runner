@@ -30,8 +30,6 @@ class Config {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
     };
-
-    this.input.customLabels = this.input.customLabels.join()
     //
     // validate input
     //
