@@ -14,7 +14,7 @@ class Config {
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
-      customLabels: core.getInput('custom-labels').join()
+      customLabels: (core.getInput('custom-labels')).join()
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
