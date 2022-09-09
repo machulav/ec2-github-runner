@@ -65,6 +65,11 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  custom-labels:
+    description: >-
+      Custom labels to add to the runner along with the unique label. Example '["custom-label1", "custom-label2"]'
+    required: false
+    default: '[]'
 outputs:
   label:
     description: >-
