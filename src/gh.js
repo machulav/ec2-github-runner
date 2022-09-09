@@ -73,6 +73,7 @@ async function waitForRunnerRegistered(label) {
 
       if (runner && runner.status === 'online') {
         core.info(`GitHub self-hosted runner ${runner.name} is registered and ready to use`);
+        core.info(`Labels used: ${label + "," + config.input.customLabels}`)
         clearInterval(interval);
         resolve();
       } else {
