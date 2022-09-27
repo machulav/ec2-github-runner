@@ -5,6 +5,7 @@ class Config {
   constructor() {
     this.input = {
       mode: core.getInput('mode'),
+      additionalPreUserdata: core.getInput('additional-pre-userdata'),
       githubToken: core.getInput('github-token'),
       ec2ImageId: core.getInput('ec2-image-id'),
       ec2InstanceType: core.getInput('ec2-instance-type'),

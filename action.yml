@@ -11,6 +11,10 @@ inputs:
         - 'start' - to start a new runner;
         - 'stop' - to stop the previously created runner.
     required: true
+  additional-pre-userdata:
+    description: >-
+      The commands you want to run at the beggining of user-data.
+    required: false
   github-token:
     description: >-
       GitHub Personal Access Token with the 'repo' scope assigned.
