@@ -65,6 +65,17 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  aws-nfs-logging:
+    description: >-
+      Flag for enabling or disabling NFS logging
+  aws-nfs-host:
+    description: >-
+      NFS host in AWS for logging
+    required: false
+  github-runner-version:
+    description: >-
+      GitHub runner releases version
+    required: false
 outputs:
   label:
     description: >-

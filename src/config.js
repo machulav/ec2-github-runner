@@ -14,6 +14,9 @@ class Config {
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
+      awsNfsLogging: core.getInput('aws-nfs-logging'),
+      awsNfsNost: core.getInput('aws-nfs-host'),
+      githubRunnerVersion: core.getInput('github-runner-version'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

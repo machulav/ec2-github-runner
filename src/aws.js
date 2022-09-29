@@ -15,23 +15,38 @@ function buildUserDataScript(githubRegistrationToken, label) {
       './run.sh',
     ];
   } else {
-    return [
+    var InstallCmds = [
       '#!/bin/bash',
-      'apt-get update && apt-get install -y nfs-common',
-      'mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 fs-0f9f29caae5ade69c.efs.eu-west-1.amazonaws.com:/ /mnt',
+      'apt-get update',
+      '[ -d /actions-runner ] || mkdir /actions-runner',
+    ];
+
+    var nfsLogging = [
+      'apt-get install -y nfs-common',
+      `mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 ${config.input.awsNfsNost}:/ /mnt`,
       'test -d /mnt/$(ec2metadata --instance-id) || install -d -o root -g root -m 0755 /mnt/$(ec2metadata --instance-id)',
       'umount /mnt',
-      'echo "fs-0f9f29caae5ade69c.efs.eu-west-1.amazonaws.com:/$(ec2metadata --instance-id)  /actions-runner/_diag  nfs4  nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600  0  0" >> /etc/fstab',
+      `echo "${config.input.awsNfsNost}:/$(ec2metadata --instance-id) /actions-runner/_diag nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 0 0" >> /etc/fstab`,
       'test -d /actions-runner/_diag || install -d -o root -g root -m 0755 /actions-runner/_diag',
       'mount -a',
-      'cd actions-runner',
+    ];
+
+    var githubRunner = [
+      'cd /actions-runner',
+      `export GITHUB_RUNNER_VERSION=${config.input.githubRunnerVersion}`,
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.286.0/actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
+      'curl -O -L https://github.com/actions/runner/releases/download/v${GITHUB_RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${GITHUB_RUNNER_VERSION}.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${GITHUB_RUNNER_VERSION}.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --replace`,
       './run.sh',
     ];
+
+    if (config.input.awsNfsLogging === true) {
+      return [].concat(InstallCmds, nfsLogging, githubRunner);
+    } else {
+      return [].concat(InstallCmds, githubRunner);
+    }
   }
 }
 
