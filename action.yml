@@ -25,6 +25,11 @@ inputs:
       EC2 Instance Type. 
       This input is required if you use the 'start' mode.
     required: false
+  instance-volume-size:
+    description: >-
+      EBS Volume Size. 
+      This input is required if you use the 'start' mode.
+    required: true
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
