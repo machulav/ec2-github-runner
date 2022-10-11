@@ -73,6 +73,7 @@ inputs:
   aws-nfs-logging:
     description: >-
       Flag for enabling or disabling NFS logging
+    required: false
   aws-nfs-host:
     description: >-
       NFS host in AWS for logging
