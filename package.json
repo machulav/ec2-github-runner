@@ -17,10 +17,11 @@
     "package": "ncc build ./src/index.js"
   },
   "dependencies": {
-    "@actions/core": "^1.9.1",
-    "@actions/github": "^4.0.0",
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
     "aws-sdk": "^2.809.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "node-fetch": "^3.2.10"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.25.1",

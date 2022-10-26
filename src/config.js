@@ -14,6 +14,8 @@ class Config {
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
+      operatingSystem: core.getInput('operating-system'),
+      timeoutMinutes: core.getInput('timeout-minutes'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -52,6 +54,16 @@ class Config {
       }
     } else {
       throw new Error('Wrong mode. Allowed values: start, stop.');
+    }
+
+    if (this.input.operatingSystem !== null) {
+      if (this.input.operatingSystem.toLowerCase() !== 'linux' && this.input.operatingSystem.toLowerCase() !== 'windows') {
+        throw new Error('Supported operating systems are "linux" or "windows".');
+      }
+    }
+
+    if (Number.isInteger(this.input.timeoutMinutes === false)) {
+      throw new Error('Timeout minutes needs to be a number.');
     }
   }
 

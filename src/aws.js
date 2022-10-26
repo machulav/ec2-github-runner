@@ -1,10 +1,25 @@
 const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
+const fetch = require('node-fetch');
+
+// Gets tag version for the latest release.
+async function getLatest() {
+  const response = await fetch('https://api.github.com/repos/actions/runner/releases/latest', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  });
+  const jsonResponse = await response.json();
+  return jsonResponse['tag_name'].replace('v', '');
+}
 
 // User data scripts are run as the root user
-function buildUserDataScript(githubRegistrationToken, label) {
-  if (config.input.runnerHomeDir) {
+async function buildUserDataScript(githubRegistrationToken, label) {
+  const version = await getLatest();
+
+  if (config.input.operatingSystem.toLowerCase() === 'linux' && config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     return [
@@ -14,13 +29,24 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
     ];
-  } else {
+  } else if (config.input.operatingSystem.toLowerCase() === 'windows') {
+    return [
+      '<powershell>',
+      'mkdir actions-runner; cd actions-runner',
+      `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${version}/actions-runner-win-x64-${version}.zip -OutFile actions-runner-win-x64-${version}.zip`,
+      `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${version}.zip", "$PWD")`,
+      `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
+      './run.cmd',
+      '</powershell>',
+    ];
+  } else if (config.input.operatingSystem.toLowerCase() === 'linux') {
     return [
       '#!/bin/bash',
       'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.286.0/actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
+      `export RUNNER_VERSION=${version}`,
+      'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
@@ -31,7 +57,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
-  const userData = buildUserDataScript(githubRegistrationToken, label);
+  const userData = await buildUserDataScript(githubRegistrationToken, label);
 
   const params = {
     ImageId: config.input.ec2ImageId,
