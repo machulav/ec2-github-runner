@@ -1,7 +1,8 @@
 on:
-  push: 
+  push:
     branches:
       - main
+      - node-upgrade
 
 name: Package
 
