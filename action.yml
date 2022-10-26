@@ -22,7 +22,7 @@ inputs:
     required: false
   ec2-instance-type:
     description: >-
-      EC2 Instance Type. 
+      EC2 Instance Type.
       This input is required if you use the 'start' mode.
     required: false
   subnet-id:
@@ -32,7 +32,7 @@ inputs:
     required: false
   security-group-id:
     description: >-
-      EC2 Security Group Id. 
+      EC2 Security Group Id.
       The security group should belong to the same VPC as the specified subnet.
       The runner doesn't require any inbound traffic. However, outbound traffic should be allowed.
       This input is required if you use the 'start' mode.
@@ -90,5 +90,5 @@ outputs:
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
 runs:
-  using: node12
+  using: node16
   main: ./dist/index.js
