@@ -10,6 +10,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     userData =  [
       '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
@@ -17,6 +18,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   } else {
     userData = [
       '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
       'curl -O -L https://github.com/actions/runner/releases/download/v2.286.0/actions-runner-linux-${RUNNER_ARCH}-2.286.0.tar.gz',
@@ -25,11 +27,14 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     ];
   }
+  if (config.input.runAsUser) {
+    userData.push(`chown -R ${config.input.runAsUser} ${config.input.runnerHomeDir}`);
+  }
   if (config.input.runAsService) {
-    userData.push('./svc.sh install');
+    userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
     userData.push('./svc.sh start');
   } else {
-    userData.push('./run.sh'); 
+    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`); 
   }
   return userData;
 }
