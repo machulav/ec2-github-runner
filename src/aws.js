@@ -11,6 +11,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     userData =  [
       '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
       `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
       'source pre-runner-script.sh',
@@ -20,6 +21,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   } else {
     userData = [
       '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
       `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
       'source pre-runner-script.sh',
@@ -30,11 +32,14 @@ function buildUserDataScript(githubRegistrationToken, label) {
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     ];
   }
+  if (config.input.runAsUser) {
+    userData.push(`chown -R ${config.input.runAsUser} ${config.input.runnerHomeDir}`);
+  }
   if (config.input.runAsService) {
-    userData.push('./svc.sh install');
+    userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
     userData.push('./svc.sh start');
   } else {
-    userData.push('./run.sh'); 
+    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`); 
   }
   return userData;
 }
