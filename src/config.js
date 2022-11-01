@@ -19,6 +19,7 @@ class Config {
       startupRetryIntervalSeconds: core.getInput('startup-retry-interval-seconds'),
       startupTimeoutMinutes: core.getInput('startup-timeout-minutes'),
       subnetId: core.getInput('subnet-id'),
+      runAsService: core.getInput('run-runner-as-service')
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
