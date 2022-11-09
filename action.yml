@@ -77,5 +77,5 @@ outputs:
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
 runs:
-  using: node12
+  using: node16
   main: ./dist/index.js
