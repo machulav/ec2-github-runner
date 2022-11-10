@@ -8,6 +8,7 @@ function setOutput(label, ec2InstanceId) {
   core.setOutput('ec2-instance-id', ec2InstanceId);
 }
 
+//test
 async function start() {
   const label = config.generateUniqueLabel();
   const githubRegistrationToken = await gh.getRegistrationToken();
