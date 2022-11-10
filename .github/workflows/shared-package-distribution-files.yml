@@ -8,14 +8,12 @@ jobs:
     name: Package distribution files
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Get current branch name
         id: get-current-branch-name
         uses: ./.github/actions/get-current-branch-name
-
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.get-current-branch-name.outputs.branch-name }}
 
       - name: Install packages
         run: npm ci
