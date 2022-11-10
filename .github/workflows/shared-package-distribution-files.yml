@@ -1,12 +1,10 @@
-on:
-  push:
-    branches:
-      - main
+name: (shared) Package distribution files
 
-name: Package
+on:
+  workflow_call:
 
 jobs:
-  package:
+  package-distribution-files:
     name: Package distribution files
     runs-on: ubuntu-latest
     steps:
@@ -14,12 +12,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: main
+
       - name: Install packages
         run: npm ci
-      - name: Run linter
-        run: npm run lint
+
       - name: Package
         run: npm run package
+
       - name: Commit
         run: |
           git config --global user.name "GitHub Actions"
