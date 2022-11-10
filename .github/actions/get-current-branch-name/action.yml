@@ -1,0 +1,42 @@
+name: Get current branch name
+description: Get current branch name for any trigger (workflow_dispatch, pull_request, etc.)
+
+outputs:
+  branch-name:
+    description: Branch name
+    value: ${{ steps.get-branch-name.outputs.branch-name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get branch name for pull_request trigger
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]];
+        then
+          echo "BRANCH_NAME=${GITHUB_HEAD_REF#refs/heads/}" >> $GITHUB_ENV
+        fi
+        exit 0
+
+    - name: Get branch name for other triggers
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" != "pull_request" ]] && [[ $GITHUB_REF == refs/heads/* ]];
+        then
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+        fi
+        exit 0
+
+    - name: Get tag name for other triggers
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" != "pull_request" ]] && [[ $GITHUB_REF == refs/tags/* ]];
+        then
+          echo "BRANCH_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        fi
+        exit 0
+
+    - name: Set branch name to output
+      id: get-branch-name
+      shell: bash
+      run: echo "##[set-output name=branch-name;]$(echo $BRANCH_NAME)"
