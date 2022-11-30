@@ -56,6 +56,38 @@ async function startEc2Instance(label, githubRegistrationToken) {
   }
 }
 
+async function resumeEc2Instance(ec2InstanceId) {
+   const ec2 = new AWS.EC2();
+
+   try {
+     const result = await ec2.startInstances({InstanceIds: [ec2InstanceId]}).promise();
+     core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
+     return ec2InstanceId;
+  } catch (error) {
+    core.error('AWS EC2 instance starting error');
+    throw error;
+  }
+
+}
+
+async function stopEc2Instance() {
+  const ec2 = new AWS.EC2();
+
+  const params = {
+    InstanceIds: [config.input.ec2InstanceId],
+  };
+
+  try {
+    core.info(`AWS EC2 instance ${config.input.ec2InstanceId} stopping`);
+    await ec2.stopInstances(params).promise();
+    core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is stopped`);
+    return;
+  } catch (error) {
+    core.error(`AWS EC2 instance ${config.input.ec2InstanceId} stop error`);
+    throw error;
+  }
+}
+
 async function terminateEc2Instance() {
   const ec2 = new AWS.EC2();
 
@@ -90,8 +122,49 @@ async function waitForInstanceRunning(ec2InstanceId) {
   }
 }
 
+async function waitForInstanceStopped(ec2InstanceId) {
+  const ec2 = new AWS.EC2();
+
+  const params = {
+    InstanceIds: [ec2InstanceId],
+  };
+
+  try {
+    await ec2.waitFor('instanceStopped', params).promise();
+  } catch (error) {
+    core.error(`AWS EC2 instance ${ec2InstanceId} stopped error`);
+    throw error;
+  }
+}
+
+async function startRunner(ec2InstanceId) {
+  const ssm = new AWS.SSM();
+
+  const commands = [
+    'cd ~/actions-runner/',
+    './run.sh',
+  ];
+
+  const params = {
+    DocumentName: 'AWS-RunShellScript',
+    Targets: [{'Key':'InstanceIds', 'Values':[ec2InstanceId]}],
+    Parameters: {'commands': [commands]},
+  }
+
+  try {
+    core.info('Sending command to start GitHub runner')
+    ssm.sendCommand(params);
+  } catch (error) {
+    core.error('Could not send command to instance');
+  }
+}
+
 module.exports = {
   startEc2Instance,
+  resumeEc2Instance,
+  stopEc2Instance,
   terminateEc2Instance,
   waitForInstanceRunning,
+  waitForInstanceStopped,
+  startRunner,
 };
