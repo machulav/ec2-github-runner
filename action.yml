@@ -49,6 +49,16 @@ inputs:
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
+  ec2-volume-size:
+    description: >-
+      EC2 volume size in GB.
+    default: 200
+    required: false
+  ec2-device-name:
+    description: >-
+      EC2 block device name.
+    default: /dev/sda1
+    required: false
   iam-role-name:
     description: >-
       IAM Role Name to attach to the created EC2 instance.
