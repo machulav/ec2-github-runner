@@ -11,7 +11,7 @@ function buildUserDataScript(githubRegistrationToken, label, runnerVersion = "2.
       '#!/bin/bash',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --ephemeral`,
       './run.sh',
     ];
   } else {
@@ -23,7 +23,7 @@ function buildUserDataScript(githubRegistrationToken, label, runnerVersion = "2.
       `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-${RUNNER_ARCH}-${runnerVersion}.tar.gz`,
       `tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${runnerVersion}.tar.gz`,
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --ephemeral`,
       './run.sh',
     ];
   }
