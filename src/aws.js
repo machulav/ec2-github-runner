@@ -17,7 +17,9 @@ function buildUserDataScript(githubRegistrationToken, label, runnerVersion = "2.
   } else {
     return [
       '#!/bin/bash',
-      'yum update && yum install -y docker git && systemctl enable docker',
+      'yum update -y',
+      'yum install -y docker git', 
+      'systemctl enable docker',
       'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
       `RUNNER_VERSION=${runnerVersion}`,
