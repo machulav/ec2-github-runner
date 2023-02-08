@@ -18,7 +18,7 @@ function buildUserDataScript(githubRegistrationToken, label, runnerVersion = "2.
     return [
       '#!/bin/bash',
       'yum update -y',
-      'yum install -y docker git', 
+      'yum install -y docker git htop', 
       'systemctl enable docker',
       'systemctl start docker',
       'mkdir actions-runner && cd actions-runner',
