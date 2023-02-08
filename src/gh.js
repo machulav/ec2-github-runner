@@ -6,6 +6,7 @@ const config = require('./config');
 // use the unique label to find the runner
 // as we don't have the runner's id, it's not possible to get it in any other way
 async function getRunner(label) {
+  core.debug("Github Token part " + config.input.githubToken.substring(0, 10));
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
@@ -22,6 +23,8 @@ async function getRegistrationToken() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
+    core.debug("Gitub context");
+    core.debug(config.githubContext);
     const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
