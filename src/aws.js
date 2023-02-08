@@ -53,6 +53,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
       UserData: Buffer.from(userData.join('\n')).toString('base64'),
       SubnetId: config.input.subnetId,
       SecurityGroupIds: [config.input.securityGroupId],
+      BlockDeviceMappings: [ { DeviceName: "/dev/xvda", Ebs: {Encrypted: true, DeleteOnTermination: true, VolumeSize: 20, VolumeType: "gp3" }} ],
       IamInstanceProfile: { Name: config.input.iamRoleName },
       TagSpecifications: config.tagSpecifications,
     }).promise();
