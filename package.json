@@ -23,7 +23,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.25.1",
+    "@vercel/ncc": "^0.36.1",
     "dotenv": "^8.6.0",
     "eslint": "^7.32.0"
   }
