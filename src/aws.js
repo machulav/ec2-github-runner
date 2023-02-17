@@ -15,12 +15,17 @@ function buildUserDataScript(githubRegistrationToken, label) {
       './run.sh',
     ];
   } else {
+    // download and run the latest GitHub runner version and AWS CLI, supports both apt and yum
     return [
       '#!/bin/bash',
       'mkdir actions-runner && cd actions-runner',
-      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
+      'command -v apt-get > /dev/null && sudo apt-get update && sudo apt-get install -y curl jq git unzip',
+      'command -v yum > /dev/null && sudo yum -y install curl jq git unzip',
+      'case $(uname -m) in aarch64) ARCH="aarch64" ;; amd64|x86_64) ARCH="x86_64" ;; esac',
+      'curl "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install',
+      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac',
+      'RUNNER_VERSION=$(curl --silent "https://api.github.com/repos/actions/runner/releases/latest" | jq -r \'.tag_name[1:]\')',
+      'curl -Ls https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${ARCH}-${RUNNER_VERSION}.tar.gz | tar xz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
