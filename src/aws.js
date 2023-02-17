@@ -27,6 +27,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'RUNNER_VERSION=$(curl --silent "https://api.github.com/repos/actions/runner/releases/latest" | jq -r \'.tag_name[1:]\')',
       'curl -Ls https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${ARCH}-${RUNNER_VERSION}.tar.gz | tar xz',
       'export RUNNER_ALLOW_RUNASROOT=1',
+      'sudo ./bin/installdependencies.sh',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
       './run.sh',
     ];
