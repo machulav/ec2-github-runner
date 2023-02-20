@@ -1,13 +1,5 @@
 # On-demand self-hosted AWS EC2 runner for GitHub Actions
 
-⚠️ If you like the project, please consider [supporting Ukraine](https://bit.ly/3KeY7dc) in a [war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine) against russian occupants. Any help would be much appreciated!
-
-[<img src="https://user-images.githubusercontent.com/2857712/156607570-8c9fd15b-8b44-41b3-bec3-312267af324f.png" width="500">](https://supportukrainenow.org)
-
-(image by [Nina Dzyvulska](https://www.behance.net/ninadz))
-
----
-
 [![awesome-runners](https://img.shields.io/badge/listed%20on-awesome--runners-blue.svg)](https://github.com/jonico/awesome-runners)
 
 Start your EC2 [self-hosted runner](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners) right before you need it.
