@@ -1,3 +1,11 @@
+DO NOT USE THIS REPO!!!
+
+It is a temporary solution to replace a fork of the original library that has since been deleted but projects still depended on.
+
+This fork enables multiple jobs to run on powerfull e2c instances. If you are having to use something like this, you probably want to rethink your existing testing strategy and make it more lightweight.
+
+This repo will eventually be deleted asap
+
 # On-demand self-hosted AWS EC2 runner for GitHub Actions
 
 ⚠️ If you like the project, please consider [supporting Ukraine](https://bit.ly/3KeY7dc) in a [war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine) against russian occupants. Any help would be much appreciated!
@@ -161,7 +169,6 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
     sudo yum update -y && \
     sudo yum install docker -y && \
     sudo yum install git -y && \
-    sudo yum install libicu -y && \
     sudo systemctl enable docker
    ```
 
@@ -202,7 +209,8 @@ Now you're ready to go!
 | `ec2-instance-id`                                                                                                                                                            | Required if you use the `stop` mode.       | EC2 Instance Id of the created runner. <br><br> The id is provided by the output of the action in the `start` mode. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                                                                                                                      |
 | `iam-role-name`                                                                                                                                                              | Optional. Used only with the `start` mode. | IAM role name to attach to the created EC2 runner. <br><br> This allows the runner to have permissions to run additional actions within the AWS account, without having to manage additional GitHub secrets and AWS users. <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above). |
 | `aws-resource-tags`                                                                                                                                                          | Optional. Used only with the `start` mode. | Specifies tags to add to the EC2 instance and any attached storage. <br><br> This field is a stringified JSON array of tag objects, each containing a `Key` and `Value` field (see example below). <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above).                         |
-| `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
+| `runner-home-dir`                                                                                                                                                            | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br>                                                                                                                                                                                                                                    |
+| `num-runners`                                                                                                                                                                | Optional. Used only with the `start` mode. | Number of runners to start                                                                                                                                                                                                                                                                                                            |
 
 ### Environment variables
 
