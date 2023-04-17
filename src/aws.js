@@ -9,13 +9,14 @@ function buildUserDataScript(githubRegistrationToken, label) {
   core.info(`Building data script for ${config.input.ec2Os}`)
 
   if (config.input.ec2Os === 'windows') {
+    // Name the instance the same as the label to avoid machine name conflicts in GitHub.
     if (config.input.runnerHomeDir) {
       // If runner home directory is specified, we expect the actions-runner software (and dependencies)
       // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
       return [
         '<powershell>',
         `cd "${config.input.runnerHomeDir}"`,
-        `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
+        `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ${label} --unattended`,
         './run.cmd',
         '</powershell>',
         '<persist>false</persist>',
@@ -26,7 +27,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
         'mkdir actions-runner; cd actions-runner',
         `Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-win-x64-${runnerVersion}.zip -OutFile actions-runner-win-x64-${runnerVersion}.zip`,
         `Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-${runnerVersion}.zip", "$PWD")`,
-        `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended`,
+        `./config.cmd --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ${label} --unattended`,
         './run.cmd',
         '</powershell>',
         '<persist>false</persist>',
