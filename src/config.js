@@ -61,7 +61,7 @@ class Config {
   }
 
   generateUniqueLabel() {
-    return Math.random().toString(36).substr(2, 5);
+    return Math.random().toString(36).substring(2, 7);
   }
 }
 
