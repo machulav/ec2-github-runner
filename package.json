@@ -17,14 +17,14 @@
     "package": "ncc build ./src/index.js"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "^1.10.0",
     "@actions/github": "^4.0.0",
-    "aws-sdk": "^2.809.0",
+    "aws-sdk": "^2.1250.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.25.1",
-    "dotenv": "^8.2.0",
-    "eslint": "^7.15.0"
+    "dotenv": "^8.6.0",
+    "eslint": "^7.32.0"
   }
 }

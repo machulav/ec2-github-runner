@@ -15,38 +15,16 @@ function buildUserDataScript(githubRegistrationToken, label) {
       './run.sh',
     ];
   } else {
-    var InstallCmds = [
+    return [
       '#!/bin/bash',
-      'apt-get update',
-      '[ -d /actions-runner ] || mkdir /actions-runner',
-    ];
-
-    var nfsLogging = [
-      'apt-get install -y nfs-common',
-      `mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 ${config.input.awsNfsNost}:/ /mnt`,
-      'test -d /mnt/$(ec2metadata --instance-id) || install -d -o root -g root -m 0755 /mnt/$(ec2metadata --instance-id)',
-      'umount /mnt',
-      `echo "${config.input.awsNfsNost}:/$(ec2metadata --instance-id) /actions-runner/_diag nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev,noatime,nocto,actimeo=600 0 0" >> /etc/fstab`,
-      'test -d /actions-runner/_diag || install -d -o root -g root -m 0755 /actions-runner/_diag',
-      'mount -a',
-    ];
-
-    var githubRunner = [
-      'cd /actions-runner',
-      `export GITHUB_RUNNER_VERSION=${config.input.githubRunnerVersion}`,
+      'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v${GITHUB_RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${GITHUB_RUNNER_VERSION}.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${GITHUB_RUNNER_VERSION}.tar.gz',
+      'curl -O -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --replace`,
+      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
       './run.sh',
     ];
-
-    if (config.input.awsNfsLogging === "true") {
-      return [].concat(InstallCmds, nfsLogging, githubRunner);
-    } else {
-      return [].concat(InstallCmds, githubRunner);
-    }
   }
 }
 
@@ -65,14 +43,6 @@ async function startEc2Instance(label, githubRegistrationToken) {
     SecurityGroupIds: [config.input.securityGroupId],
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
-    BlockDeviceMappings: [
-      {
-        DeviceName: "/dev/sda1",
-        Ebs: { 
-          VolumeSize: config.input.instanceVolumeSize
-        }
-      }
-    ]
   };
 
   try {
