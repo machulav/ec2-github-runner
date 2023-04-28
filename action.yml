@@ -39,10 +39,15 @@ inputs:
     required: false
   label:
     description: >-
-      Name of the unique label assigned to the runner.
+      Defines the runner's label name when set. If this value is not defined, the runner will generate a random label.
       The label is used to remove the runner from GitHub when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
+  scope:
+    description: >-
+      The runner's scope. The runner scope must be "repository", "organization" or "enterprise".
+    required: true
+    options: ["repository", "organization", "enterprise"]
   ec2-instance-id:
     description: >-
       EC2 Instance Id of the created runner.
@@ -65,6 +70,15 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  host-id:
+    description: >-
+      The host id to provide a dedicated host in your account. It is necessary for macos instances.
+    required: false
+  timeout:
+    description:
+      The time (in minutes) that this actions will wait the the runner be created. The default value is 5 minutes.
+    required: false
+    default: 5
 outputs:
   label:
     description: >-

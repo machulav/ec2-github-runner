@@ -9,7 +9,7 @@ async function getRunner(label) {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+    const runners = await octokit.paginate(`GET ${config.github.apiPath}/actions/runners`);
     const foundRunners = _.filter(runners, { labels: [{ name: label }] });
     return foundRunners.length > 0 ? foundRunners[0] : null;
   } catch (error) {
@@ -22,7 +22,7 @@ async function getRegistrationToken() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
+    const response = await octokit.request(`POST ${config.github.apiPath}/actions/runners/registration-token`);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
@@ -42,7 +42,7 @@ async function removeRunner() {
   }
 
   try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+    await octokit.request(`DELETE ${config.github.apiPath}/actions/runners/{runner_id}`, { runner_id: runner.id });
     core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {
@@ -52,7 +52,7 @@ async function removeRunner() {
 }
 
 async function waitForRunnerRegistered(label) {
-  const timeoutMinutes = 5;
+  const timeoutMinutes = core.getInput('timeout')
   const retryIntervalSeconds = 10;
   const quietPeriodSeconds = 30;
   let waitSeconds = 0;

@@ -21,19 +21,20 @@ See [below](#example) the YAML code of the depicted workflow. <br><br>
 
 **Table of Contents**
 
-- [Use cases](#use-cases)
-  - [Access private resources in your VPC](#access-private-resources-in-your-vpc)
-  - [Customize hardware configuration](#customize-hardware-configuration)
-  - [Save costs](#save-costs)
-- [Usage](#usage)
-  - [How to start](#how-to-start)
-  - [Inputs](#inputs)
-  - [Environment variables](#environment-variables)
-  - [Outputs](#outputs)
-  - [Example](#example)
-  - [Real user examples](#real-user-examples)
-- [Self-hosted runner security with public repositories](#self-hosted-runner-security-with-public-repositories)
-- [License Summary](#license-summary)
+- [On-demand self-hosted AWS EC2 runner for GitHub Actions](#on-demand-self-hosted-aws-ec2-runner-for-github-actions)
+  - [Use cases](#use-cases)
+    - [Access private resources in your VPC](#access-private-resources-in-your-vpc)
+    - [Customize hardware configuration](#customize-hardware-configuration)
+    - [Save costs](#save-costs)
+  - [Usage](#usage)
+    - [How to start](#how-to-start)
+    - [Inputs](#inputs)
+    - [Environment variables](#environment-variables)
+    - [Outputs](#outputs)
+    - [Example](#example)
+    - [Real user examples](#real-user-examples)
+  - [Self-hosted runner security with public repositories](#self-hosted-runner-security-with-public-repositories)
+  - [License Summary](#license-summary)
 
 ## Use cases
 
@@ -203,6 +204,7 @@ Now you're ready to go!
 | `iam-role-name`                                                                                                                                                              | Optional. Used only with the `start` mode. | IAM role name to attach to the created EC2 runner. <br><br> This allows the runner to have permissions to run additional actions within the AWS account, without having to manage additional GitHub secrets and AWS users. <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above). |
 | `aws-resource-tags`                                                                                                                                                          | Optional. Used only with the `start` mode. | Specifies tags to add to the EC2 instance and any attached storage. <br><br> This field is a stringified JSON array of tag objects, each containing a `Key` and `Value` field (see example below). <br><br> Setting this requires additional AWS permissions for the role launching the instance (see above).                         |
 | `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
+|``
 
 ### Environment variables
 
@@ -219,8 +221,11 @@ We recommend using [aws-actions/configure-aws-credentials](https://github.com/aw
 
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `label`                                                                                                                                                                      | Name of the unique label assigned to the runner. <br><br> The label is used in two cases: <br> - to use as the input of `runs-on` property for the following jobs; <br> - to remove the runner from GitHub when it is not needed anymore. |
+| `label`                                                                                                                                                                      | Name of the unique label assigned to the runner. If it is not informed, the plugin will generate a random name. <br><br> The label is used in two cases: <br> - to use as the input of `runs-on` property for the following jobs; <br> - to remove the runner from GitHub when it is not needed anymore. |
 | `ec2-instance-id`                                                                                                                                                            | EC2 Instance Id of the created runner. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                                                                                                       |
+|`scope`|  The scope of yours runner it can be `repository`or `organization`. You need to have a Github Token with the correct permissions to create the org runner |
+| `host-id` | Created to support macOS Dedicated Hosts. You need to allocate the Dedicated Host and to inform its hostId to use this feature. |
+| `timeout` | The timeout to wait for the runner to be ready. The default value is 5 minutes|.
 
 ### Example
 
