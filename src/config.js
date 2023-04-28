@@ -14,6 +14,24 @@ class Config {
       ec2InstanceId: core.getInput('ec2-instance-id'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
+      scope: core.getInput('scope'),
+      hostId: core.getInput('host-id'),
+    };
+
+    this.GITHUB_SCOPES = {
+      organization: {
+        url: `https://github.com/${github.context.repo.owner}`,
+        context: { owner: github.context.repo.owner },
+        apiPath: `/orgs/${github.context.repo.owner}`
+      },
+      repository: {
+        url: `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`,
+        apiPath: `/repos/${github.context.repo.owner}/${github.context.repo.repo}`,
+        context: {
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo
+        }
+      }
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -22,13 +40,10 @@ class Config {
       this.tagSpecifications = [{ResourceType: 'instance', Tags: tags}, {ResourceType: 'volume', Tags: tags}];
     }
 
-    // the values of github.context.repo.owner and github.context.repo.repo are taken from
-    // the environment variable GITHUB_REPOSITORY specified in "owner/repo" format and
-    // provided by the GitHub Action on the runtime
-    this.githubContext = {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-    };
+    this.github = this.GITHUB_SCOPES[this.input.scope];
+    if (!this.github) {
+      throw new Error(`The 'scope' input is not valid`);
+    }
 
     //
     // validate input
@@ -55,8 +70,12 @@ class Config {
     }
   }
 
-  generateUniqueLabel() {
-    return Math.random().toString(36).substr(2, 5);
+  generateLabel() {
+    if (!this.input.label) {
+      return Math.random().toString(36).substr(2, 5);
+    }
+
+    return this.input.label
   }
 }
 

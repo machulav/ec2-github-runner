@@ -11,18 +11,22 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.sh --url ${config.github.url} --token ${githubRegistrationToken} --labels ${label}  --name ${label} --runnergroup default --work "${config.input.runnerHomeDir}" --replace`,
       './run.sh',
     ];
   } else {
     return [
       '#!/bin/bash',
-      'mkdir actions-runner && cd actions-runner',
-      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
-      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
+      'cd /opt && mkdir actions-runner && cd actions-runner',
+      'case $(uname -m) in aarch64|arm64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+      'case $(uname -a) in Darwin*) OS="osx" ;; Linux*) OS="linux" ;; esac && export RUNNER_OS=${OS}',
+      'export VERSION="2.303.0"',
+      'curl -O -L https://github.com/actions/runner/releases/download/v${VERSION}/actions-runner-${RUNNER_OS}-${RUNNER_ARCH}-${VERSION}.tar.gz',
+      'export LC_ALL=en_US.UTF-8',
+      'export LANG=en_EN.UTF-8',
+      'tar xzf ./actions-runner-${RUNNER_OS}-${RUNNER_ARCH}-${VERSION}.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
+      `./config.sh --url ${config.github.url} --token ${githubRegistrationToken} --labels ${label} --name ${label} --runnergroup default --work $(pwd) --replace`,
       './run.sh',
     ];
   }
@@ -44,6 +48,13 @@ async function startEc2Instance(label, githubRegistrationToken) {
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
   };
+
+  if (config.input.hostId) {
+    params.Placement = {
+      Tenancy: 'host',
+      HostId: config.input.hostId
+    }
+  }
 
   try {
     const result = await ec2.runInstances(params).promise();
