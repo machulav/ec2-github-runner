@@ -33,13 +33,13 @@ function buildUserDataScript(githubRegistrationToken, label) {
     ];
   }
   if (config.input.runAsUser) {
-    userData.push(`chown -R ${config.input.runAsUser} ${config.input.runnerHomeDir}`);
+    userData.push(`chown -R ${config.input.runAsUser} .`);
   }
   if (config.input.runAsService) {
     userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
     userData.push('./svc.sh start');
   } else {
-    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`); 
+    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
   }
   return userData;
 }
