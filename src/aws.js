@@ -11,6 +11,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
+      'sudo yum update -y && sudo yum install docker -y && sudo yum install git -y && sudo yum install libicu -y && sudo systemctl enable docker',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --ephemeral`,
       './run.sh',
     ];
@@ -22,6 +23,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'curl -O -L https://github.com/actions/runner/releases/download/2.304.0/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.304.0.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
+      'sudo yum update -y && sudo yum install docker -y && sudo yum install git -y && sudo yum install libicu -y && sudo systemctl enable docker',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --ephemeral`,
       './run.sh',
     ];
