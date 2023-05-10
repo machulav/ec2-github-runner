@@ -20,6 +20,8 @@ jobs:
         run: npm run lint
       - name: Package
         run: npm run package
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
       - name: Commit
         run: |
           git config --global user.name "GitHub Actions"
