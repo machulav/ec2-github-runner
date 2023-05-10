@@ -1,4 +1,4 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, WaiterState, waitUntilInstanceRunning} = require('@aws-sdk/client-ec2');
+const AWS = require('aws-sdk');
 const core = require('@actions/core');
 const config = require('./config');
 
@@ -63,7 +63,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
-  const ec2 = new EC2Client({});
+  const ec2 = new AWS.EC2();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
@@ -79,12 +79,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
     TagSpecifications: config.tagSpecifications,
   };
 
-  if (config.input.awsKeyPairName) {
-    params['KeyName'] = config.input.awsKeyPairName
-  }
-
   try {
-    const result = await ec2.send(new RunInstancesCommand(params));
+    const result = await ec2.runInstances(params).promise();
     const ec2InstanceId = result.Instances[0].InstanceId;
     core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
     return ec2InstanceId;
@@ -95,15 +91,16 @@ async function startEc2Instance(label, githubRegistrationToken) {
 }
 
 async function terminateEc2Instance() {
-  const ec2 = new EC2Client({});
+  const ec2 = new AWS.EC2();
 
   const params = {
     InstanceIds: [config.input.ec2InstanceId],
   };
 
   try {
-    await ec2.send(new TerminateInstancesCommand(params));
+    await ec2.terminateInstances(params).promise();
     core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is terminated`);
+
   } catch (error) {
     core.error(`AWS EC2 instance ${config.input.ec2InstanceId} termination error`);
     throw error;
@@ -111,21 +108,15 @@ async function terminateEc2Instance() {
 }
 
 async function waitForInstanceRunning(ec2InstanceId) {
-  const ec2 = new EC2Client({});
+  const ec2 = new AWS.EC2();
 
   const params = {
     InstanceIds: [ec2InstanceId],
   };
 
   try {
-    await waitUntilInstanceRunning(ec2, params).then((waiter) => {
-      if (waiter.state === WaiterState.SUCCESS) {
-        core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
-      } else {
-        core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
-        throw new Error('Instance did not transition to running state');
-      }
-    });
+    await ec2.waitFor('instanceRunning', params).promise();
+    core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
   } catch (error) {
     core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
     throw error;
