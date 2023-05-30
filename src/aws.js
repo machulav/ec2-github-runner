@@ -19,7 +19,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       'mkdir actions-runner && cd actions-runner',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/2.304.0/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
+      'curl -O -L https://github.com/actions/runner/releases/download/2.304.0/actions-runner-linux-${RUNNER_ARCH}-2.304.0.tar.gz',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.304.0.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --ephemeral`,
