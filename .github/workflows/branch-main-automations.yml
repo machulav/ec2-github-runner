@@ -1,0 +1,10 @@
+name: (branch main) Automations
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  package-distribution-files:
+    uses: ./.github/workflows/shared-package-distribution-files.yml
