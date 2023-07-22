@@ -6,6 +6,7 @@ const config = require('./config');
 // use the unique label to find the runner
 // as we don't have the runner's id, it's not possible to get it in any other way
 async function getRunner(label) {
+  core.debug("Github Token part " + config.input.githubToken.substring(0, 10));
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
@@ -19,14 +20,18 @@ async function getRunner(label) {
 
 // get GitHub Registration Token for registering a self-hosted runner
 async function getRegistrationToken() {
-  const octokit = github.getOctokit(config.input.githubToken);
+  core.debug("Github Token part " + config.input.githubToken.substring(0, 10));
+  const octokit = github.getOctokit(config.input.githubToken, { log: core });
 
   try {
+    core.debug("Github context");
+    core.debug(config.githubContext);
     const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
     core.error('GitHub Registration Token receiving error');
+    core.error(error);
     throw error;
   }
 }
@@ -53,8 +58,8 @@ async function removeRunner() {
 
 async function waitForRunnerRegistered(label) {
   const timeoutMinutes = 5;
-  const retryIntervalSeconds = 10;
-  const quietPeriodSeconds = 30;
+  const retryIntervalSeconds = 5;
+  const quietPeriodSeconds = 10;
   let waitSeconds = 0;
 
   core.info(`Waiting ${quietPeriodSeconds}s for the AWS EC2 instance to be registered in GitHub as a new self-hosted runner`);
