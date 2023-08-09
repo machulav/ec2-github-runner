@@ -1,4 +1,8 @@
-# On-demand self-hosted AWS EC2 runner for GitHub Actions
+# Self-hosted AWS EC2 runners on-demand for GitHub Actions
+
+This repo and GitHub Action is a fork of https://github.com/machulav/ec2-github-runner with some changes that you can see in the release changelogs. I created this fork so that I can put fixes on top of the repo and make any customizations I want and also share them with the community
+
+Credit to [Volodymyr Machula](https://github.com/machulav) for creating https://github.com/machulav/ec2-github-runner
 
 ⚠️ If you like the project, please consider [supporting Ukraine](https://bit.ly/3KeY7dc) in a [war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine) against russian occupants. Any help would be much appreciated!
 
@@ -249,7 +253,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v2
+        uses: karuppiah7890/ec2-github-runner@v2
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
@@ -285,7 +289,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
+        uses: karuppiah7890/ec2-github-runner@v2
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
