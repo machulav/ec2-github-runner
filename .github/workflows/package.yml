@@ -14,8 +14,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: main
-      - name: Use Node.js v16.x
-        run: nvm use 16
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
       - name: Install packages
         run: npm ci
       - name: Run linter
