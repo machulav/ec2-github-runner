@@ -11,7 +11,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   const allowRunAsRoot = 'export RUNNER_ALLOW_RUNASROOT=1'
   const runTheRunner = './run.sh'
   const findMachineArchitecture = 'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}'
-  const runnerVersion = '2.299.1'
+  const runnerVersion = '2.307.1'
   const downloadRunnerTarBall = `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-\${RUNNER_ARCH}-${runnerVersion}.tar.gz`
 
   if (config.input.runnerHomeDir) {
