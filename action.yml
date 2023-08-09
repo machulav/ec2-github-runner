@@ -1,4 +1,4 @@
-name: On-demand self-hosted AWS EC2 runner for GitHub Actions
+name: Self-hosted AWS EC2 runners on-demand for GitHub Actions
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
 author: Karuppiah Natarajan # Credit to Volodymyr Machula (https://github.com/machulav) for creating https://github.com/machulav/ec2-github-runner
 branding:
