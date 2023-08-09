@@ -5,7 +5,7 @@ const config = require('./config');
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
   const binBash = '#!/bin/bash'
-  const configureRunner = `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name $(hostname)-$(uuidgen) --replace`
+  const configureRunner = `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name $(hostname)-$(uuidgen) --replace --ephemeral`
   const createPreRunnerScript = `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`
   const runPreRunnerScript = 'source pre-runner-script.sh'
   const allowRunAsRoot = 'export RUNNER_ALLOW_RUNASROOT=1'
