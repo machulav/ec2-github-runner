@@ -4,30 +4,40 @@ const config = require('./config');
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
+  const binBash = '#!/bin/bash'
+  const configureRunner = `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`
+  const createPreRunnerScript = `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`
+  const runPreRunnerScript = 'source pre-runner-script.sh'
+  const allowRunAsRoot = 'export RUNNER_ALLOW_RUNASROOT=1'
+  const runTheRunner = './run.sh'
+  const findMachineArchitecture = 'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}'
+  const runnerVersion = '2.299.1'
+  const downloadRunnerTarBall = `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-\${RUNNER_ARCH}-${runnerVersion}.tar.gz`
+
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     return [
-      '#!/bin/bash',
+      binBash,
       `cd "${config.input.runnerHomeDir}"`,
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
-      'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh',
+      createPreRunnerScript,
+      runPreRunnerScript,
+      allowRunAsRoot,
+      configureRunner,
+      runTheRunner,
     ];
   } else {
     return [
-      '#!/bin/bash',
+      binBash,
       'mkdir actions-runner && cd actions-runner',
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
-      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'curl -O -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
+      createPreRunnerScript,
+      runPreRunnerScript,
+      findMachineArchitecture,
+      downloadRunnerTarBall,
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
-      'export RUNNER_ALLOW_RUNASROOT=1',
-      `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh',
+      allowRunAsRoot,
+      configureRunner,
+      runTheRunner,
     ];
   }
 }
