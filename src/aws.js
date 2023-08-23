@@ -9,7 +9,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
   const createPreRunnerScript = `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`
   const runPreRunnerScript = 'source pre-runner-script.sh'
   const allowRunAsRoot = 'export RUNNER_ALLOW_RUNASROOT=1'
-  const runTheRunner = './run.sh'
+  const installTheRunnerSystemdService = './svc.sh install'
+  const runTheRunnerSystemdService = './svc.sh start'
   const findMachineArchitecture = 'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}'
   const runnerVersion = '2.307.1'
   const downloadRunnerTarBall = `curl -O -L https://github.com/actions/runner/releases/download/v${runnerVersion}/actions-runner-linux-\${RUNNER_ARCH}-${runnerVersion}.tar.gz`
@@ -24,7 +25,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       runPreRunnerScript,
       allowRunAsRoot,
       configureRunner,
-      runTheRunner,
+      installTheRunnerSystemdService,
+      runTheRunnerSystemdService,
     ];
   } else {
     return [
@@ -37,7 +39,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.299.1.tar.gz',
       allowRunAsRoot,
       configureRunner,
-      runTheRunner,
+      installTheRunnerSystemdService,
+      runTheRunnerSystemdService,
     ];
   }
 }
