@@ -25,6 +25,11 @@ inputs:
       EC2 Instance Type. 
       This input is required if you use the 'start' mode.
     required: false
+  assign-public-ip-to-instance:
+    description: >-
+      Set this to true if you want to assign public IPv4 address to the EC2 instance. Default value is false
+    required: false
+    default: 'false' # Default value is false for better safety and to keep costs low as public IPv4 address costs money in AWS from Feb 1 2024
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
