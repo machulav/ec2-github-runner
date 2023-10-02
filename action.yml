@@ -76,6 +76,11 @@ inputs:
     description: >-
       The AWS Key Pair Name to be associated to the instance
     required: false
+  pre-runner-script:
+    description: >-
+      Specifies bash commands to run before the runner starts. It's useful for installing dependencies with apt-get, yum, dnf, etc.
+    required: false
+
 outputs:
   label:
     description: >-
