@@ -1,4 +1,4 @@
-import { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning  } from "@aws-sdk/client-ec2"; // ES Modules import
+const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning } = require("@aws-sdk/client-ec2");
 const core = require('@actions/core');
 const config = require('./config');
 
