@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+import { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning  } from "@aws-sdk/client-ec2"; // ES Modules import
 const core = require('@actions/core');
 const config = require('./config');
 
@@ -70,7 +70,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
-  const ec2 = new AWS.EC2();
+  const client = new EC2Client();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
@@ -86,8 +86,10 @@ async function startEc2Instance(label, githubRegistrationToken) {
     TagSpecifications: config.tagSpecifications,
   };
 
+  const command = new RunInstancesCommand(params);
+
   try {
-    const result = await ec2.runInstances(params).promise();
+    const result = await client.send(command);
     const ec2InstanceId = result.Instances[0].InstanceId;
     core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
     return ec2InstanceId;
@@ -98,14 +100,16 @@ async function startEc2Instance(label, githubRegistrationToken) {
 }
 
 async function terminateEc2Instance() {
-  const ec2 = new AWS.EC2();
+  const client = new EC2Client();
 
   const params = {
     InstanceIds: [config.input.ec2InstanceId],
   };
 
+  const command = new TerminateInstancesCommand(params);
+
   try {
-    await ec2.terminateInstances(params).promise();
+    await client.send(command);
     core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is terminated`);
 
   } catch (error) {
@@ -115,14 +119,14 @@ async function terminateEc2Instance() {
 }
 
 async function waitForInstanceRunning(ec2InstanceId) {
-  const ec2 = new AWS.EC2();
+  const client = new EC2Client();
 
   const params = {
     InstanceIds: [ec2InstanceId],
   };
 
   try {
-    await ec2.waitFor('instanceRunning', params).promise();
+    await waitUntilInstanceRunning({client, maxWaitTime: 30, minDelay: 3}, params);
     core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
   } catch (error) {
     core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
