@@ -36,7 +36,9 @@ function buildMarketOptions() {
   if (config.input.marketType === 'spot') {
     return {
       MarketType: config.input.marketType,
-      SpotInstanceType: 'one-time',
+      SpotOptions: {
+        SpotInstanceType: 'one-time',
+      },
     };
   }
 
