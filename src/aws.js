@@ -33,9 +33,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
 }
 
 function buildMarketOptions() {
-  if (config.marketType === 'spot') {
+  if (config.input.marketType === 'spot') {
     return {
-      MarketType: config.marketType,
+      MarketType: config.input.marketType,
       SpotInstanceType: 'one-time',
     };
   }
