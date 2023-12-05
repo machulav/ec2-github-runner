@@ -1,7 +1,7 @@
 {
-  "name": "ec2-github-runner",
+  "name": "@firstshift/ec2-github-runner",
   "description": "GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.",
-  "author": "Volodymyr Machula",
+  "author": "Volodymyr Machula, Patrick Foh",
   "license": "MIT",
   "repository": {
     "type": "git",
