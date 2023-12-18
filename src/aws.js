@@ -32,7 +32,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   }
 }
 
-async function startEc2Instance(label, githubRegistrationToken) {
+async function startEc2Instances(label, githubRegistrationToken) {
   const ec2 = new AWS.EC2();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
@@ -40,8 +40,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
   const params = {
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
-    MinCount: 1,
-    MaxCount: 1,
+    MinCount: config.input.ec2InstanceCount,
+    MaxCount: config.input.ec2InstanceCount,
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
     SubnetId: config.input.subnetId,
     SecurityGroupIds: [config.input.securityGroupId],
@@ -51,28 +51,30 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   try {
     const result = await ec2.runInstances(params).promise();
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
+    const ec2InstanceIds = result.Instances.map((ins) => ins.InstanceId)
+    for (const id of ec2InstanceIds) {
+      core.info(`AWS EC2 instance ${id} is started`);
+    }
+    return ec2InstanceIds;
   } catch (error) {
     core.error('AWS EC2 instance starting error');
     throw error;
   }
 }
 
-async function terminateEc2Instance() {
+async function terminateEc2Instance(ec2InstanceId) {
   const ec2 = new AWS.EC2();
 
   const params = {
-    InstanceIds: [config.input.ec2InstanceId],
+    InstanceIds: [ec2InstanceId],
   };
 
   try {
     await ec2.terminateInstances(params).promise();
-    core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is terminated`);
+    core.info(`AWS EC2 instance ${ec2InstanceId} is terminated`);
     return;
   } catch (error) {
-    core.error(`AWS EC2 instance ${config.input.ec2InstanceId} termination error`);
+    core.error(`AWS EC2 instance ${ec2InstanceId} termination error`);
     throw error;
   }
 }
@@ -95,7 +97,7 @@ async function waitForInstanceRunning(ec2InstanceId) {
 }
 
 module.exports = {
-  startEc2Instance,
+  startEc2Instances,
   terminateEc2Instance,
   waitForInstanceRunning,
 };

@@ -22,7 +22,7 @@ inputs:
     required: false
   ec2-instance-type:
     description: >-
-      EC2 Instance Type. 
+      EC2 Instance Type.
       This input is required if you use the 'start' mode.
     required: false
   subnet-id:
@@ -32,7 +32,7 @@ inputs:
     required: false
   security-group-id:
     description: >-
-      EC2 Security Group Id. 
+      EC2 Security Group Id.
       The security group should belong to the same VPC as the specified subnet.
       The runner doesn't require any inbound traffic. However, outbound traffic should be allowed.
       This input is required if you use the 'start' mode.
@@ -40,15 +40,20 @@ inputs:
   label:
     description: >-
       Name of the unique label assigned to the runner.
-      The label is used to remove the runner from GitHub when the runner is not needed anymore.
+      The label is used to remove the runner from GitHub when the runners are not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
-  ec2-instance-id:
+  ec2-instance-ids:
     description: >-
-      EC2 Instance Id of the created runner.
-      The id is used to terminate the EC2 instance when the runner is not needed anymore.
+      EC2 Instance Ids of the created runners.
+      The ids are used to terminate the EC2 instances when the runners are not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
+  ec2-instance-count:
+    description: >-
+      EC2 instance count, amount of instances that will be created. Defaults to 1.
+    required: false
+    default: '1'
   iam-role-name:
     description: >-
       IAM Role Name to attach to the created EC2 instance.
