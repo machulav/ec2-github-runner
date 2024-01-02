@@ -1,0 +1,145 @@
+name: Dashcam.io
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+jobs:
+  start-runner:
+    name: Start Runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Configure Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - uses: actions/checkout@v2
+      - name: Start Runner
+        id: start-ec2-runner
+        uses: ./.github/actions/ec2-github-runner
+        with:
+          mode: start
+          pre-runner-script: |
+            pkill -x "Bluetooth\ File\ Exchange"
+          runner-home-dir: actions-runner
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-0f62821f7ef782c81
+          ec2-instance-type: mac1.metal
+          subnet-id: subnet-abc571c0
+          security-group-id: sg-0d779c7ddacc556bd
+          availability-zone: us-east-2b
+          # iam-role-name: my-role-name # optional, requires additional permissions
+          aws-resource-tags: > # optional, requires additional permissions
+            [
+              {"Key": "Name", "Value": "ec2-github-runner"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
+            ]
+  do-the-job:
+    name: Execute Test
+    needs: start-runner # required to start the main job when the runner is ready
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    steps:
+      - name: Authorize with GitHub Package Registry
+        run: |
+          echo '@nut-tree:registry=https://pkg.nutjs.dev' >> ~/.npmrc
+          echo '//pkg.nutjs.dev/:_authToken=9e4f190c-c20a-4ee1-99af-a43e39e747f6' >> ~/.npmrc
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Change Runner Resolution
+        run: |
+          displayplacer "id:$(displayplacer list | grep "Persistent screen id:" | cut -f2- -d: | xargs) res:1920x1080 scaling:off origin:(0,0) degree:0"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.head_commit.id }}
+
+      - name: Buffer
+        run: sleep 10
+        shell: bash
+      - name: Install Dashcam CLI
+        run: npm install -g dashcam
+        # assume dashcam is already running
+      - name: Start Dashcam Capture
+        run: dashcam start
+
+      # Wait for the recording to start
+      - name: Buffer
+        run: sleep 10
+        shell: bash
+
+      - name: Run Tests
+        run: |
+          pwd
+          npm get userconfig
+          npm config set @nut-tree:registry https://pkg.nutjs.dev
+          npm install
+          npm test 2>&1 | tee -a /tmp/dashcam-${{ github.event.head_commit.id }}.log
+          sleep 10
+
+      # Give some time
+      - name: Buffer
+        run: sleep 5
+        shell: bash
+
+      - name: Stop Dashcam Capture
+        if: ${{ always() }}
+        run: echo "shareLink=$(dashcam -t \"${{ github.event.head_commit.id }}\" -p --md)" >> $GITHUB_ENV
+      - name: Dashcam.io Results
+        if: ${{ always() }}
+        run: echo "${{ env.shareLink }}"
+      - uses: actions/github-script@v6
+        name: Get Issue Number
+        id: get_issue_number
+        if: ${{ always() }}
+        with:
+          script: |
+            if (context.issue.number) {
+              // Return issue number if present
+              return context.issue.number;
+            } else {
+              // Otherwise return issue number from commit
+              return (
+                await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  commit_sha: context.sha,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                })
+              ).data[0].number;
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Dashcam.io Comment on PR
+        if: ${{ always() }}
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{steps.get_issue_number.outputs.result}}
+          body: |
+            Dash: ${{ env.shareLink }}
+  stop-runner:
+    name: Stop Runner
+    needs:
+      - start-runner # required to get output from the start-runner job
+      - do-the-job # required to wait when the main job is done
+    runs-on: ubuntu-latest
+    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
+    steps:
+      - name: Configure Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - uses: actions/checkout@v2
+      - name: Stop Runner
+        uses: ./.github/actions/ec2-github-runner
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
