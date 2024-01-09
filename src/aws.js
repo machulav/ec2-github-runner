@@ -69,6 +69,16 @@ async function startEc2Instance(label, githubRegistrationToken) {
     SecurityGroupIds: [config.input.securityGroupId],
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
+    BlockDeviceMappings: [
+      {
+        DeviceName: '/dev/sda1', // Modify this based on the device name of the root volume
+        Ebs: {
+          VolumeSize: 150, // Set the volume size to 150GB
+          VolumeType: 'gp2', // Adjust volume type as needed (e.g., 'gp2', 'io1', etc.)
+          DeleteOnTermination: true, // Specify if the volume should be deleted on instance termination
+        },
+      },
+    ],
   };
 
   try {
