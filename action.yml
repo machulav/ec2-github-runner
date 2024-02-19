@@ -65,6 +65,11 @@ inputs:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
     required: false
+  pre-runner-script:
+    description: >-
+      Specifies bash commands to run before the runner starts. It's useful for installing dependencies with apt-get, yum, dnf, etc.
+    required: false
+
 outputs:
   label:
     description: >-
@@ -77,5 +82,5 @@ outputs:
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
 runs:
-  using: node16
+  using: node20
   main: ./dist/index.js
