@@ -19,6 +19,16 @@ function buildUserDataScript(githubRegistrationToken, label) {
   } else {
     return [
       '#!/bin/bash',
+      'yum update -y',
+      'yum install git -y',
+      'yum install jq -y',
+
+      'amazon-linux-extras install docker',
+      'service docker start',
+      'usermod -a -G docker ec2-user',
+      "curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m) -o /usr/bin/docker-compose",
+      'chmod 755 /usr/bin/docker-compose',
+
       'mkdir actions-runner && cd actions-runner',
       `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
       'source pre-runner-script.sh',
@@ -37,6 +47,9 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
+  // Spot instance valid for 1 hour only.
+  // const validUntil = new Date(Date.now() + 1 * (60 * 60 * 1000));
+
   const params = {
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
@@ -47,6 +60,16 @@ async function startEc2Instance(label, githubRegistrationToken) {
     SecurityGroupIds: [config.input.securityGroupId],
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
+    InstanceMarketOptions: {
+      MarketType: 'spot',
+      SpotOptions: {
+        // BlockDurationMinutes: 'NUMBER_VALUE',
+        InstanceInterruptionBehavior: 'terminate',
+        // MaxPrice: 'STRING_VALUE',
+        SpotInstanceType: 'one-time',
+        // ValidUntil: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789
+      }
+    },
   };
 
   try {
