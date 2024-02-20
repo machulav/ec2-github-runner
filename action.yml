@@ -37,6 +37,23 @@ inputs:
       The runner doesn't require any inbound traffic. However, outbound traffic should be allowed.
       This input is required if you use the 'start' mode.
     required: false
+  key-name:
+    description: >-
+      EC2 Key Pair name. 
+      Can be assigned to the EC2 instance so user can SSH in for debuging.
+    required: false
+  storage-path:
+    description: >-
+      EC2 Block Storage Volume.
+      Used for configuring the mount path of the volume if you're overriding the default volume size of the EC2 instance. 
+      The parameter `storage-size` must also be configured when using this parameter.
+    required: false
+  storage-size:
+    description: >-
+      EC2 Block Storage Volume.
+      Used for overriding volume size of the machine if your project exceed the 8GiB default storage. 
+      The parameter `storage-path` must also be configured when using this parameter.
+    required: false
   label:
     description: >-
       Name of the unique label assigned to the runner.
