@@ -250,7 +250,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v2
+        uses: matheus-rosa/ec2-github-runner@v2
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
@@ -286,7 +286,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
+        uses: matheus-rosa/ec2-github-runner@v2
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
@@ -296,7 +296,7 @@ jobs:
 
 ### Real user examples
 
-In [this discussion](https://github.com/machulav/ec2-github-runner/discussions/19), you can find feedback and examples from the users of the action.
+In [this discussion](https://github.com/matheus-rosa/ec2-github-runner/discussions/19), you can find feedback and examples from the users of the action.
 
 If you use this action in your workflow, feel free to add your story there as well 🙌
 
