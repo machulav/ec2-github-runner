@@ -69,6 +69,11 @@ inputs:
     description: >-
       Specifies bash commands to run before the runner starts. It's useful for installing dependencies with apt-get, yum, dnf, etc.
     required: false
+  quiet-period-seconds:
+    description: >-
+      Specifies how long the runner should wait for GitHub response.
+    required: false
+    default: '30'
 
 outputs:
   label:
