@@ -74,6 +74,11 @@ inputs:
       Specifies how long the runner should wait for GitHub response.
     required: false
     default: '30'
+  market-type:
+    description: >-
+      Specifies the market (purchasing) option for the instance:
+        - 'spot' - Use a spot instance
+    required: false
 
 outputs:
   label:
