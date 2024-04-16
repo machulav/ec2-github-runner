@@ -38,15 +38,16 @@ async function startEc2Instance(label, githubRegistrationToken) {
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
   const params = {
-    
-    BlockDeviceMappings: [
-      {
-        DeviceName: "/dev/sdh", 
-        Ebs: {
-          VolumeSize: 32,
+    ...config.input.ec2VolumeSize && {
+        BlockDeviceMappings: [
+        {
+          DeviceName: "/dev/sda1", 
+          Ebs: {
+            VolumeSize: config.input.ec2VolumeSize
+          }
         }
-       }
-    ],
+      ]
+    }, 
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType ,
     MinCount: 1,
