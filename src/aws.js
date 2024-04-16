@@ -49,7 +49,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
       ]
     }, 
     ImageId: config.input.ec2ImageId,
-    InstanceType: config.input.ec2InstanceType ,
+    InstanceType: config.input.ec2InstanceType,
     MinCount: 1,
     MaxCount: 1,
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
