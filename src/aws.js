@@ -3,6 +3,26 @@ const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInst
 const core = require('@actions/core');
 const config = require('./config');
 
+function getRegion(){
+  if (process.env.AWS_DEFAULT_REGION){
+    core.info(`Getting region from AWS_DEFAULT_REGION ${process.env.AWS_DEFAULT_REGION}`)
+    return {
+      region: process.env.AWS_DEFAULT_REGION
+    }
+  }
+  if (process.env.AWS_REGION){
+    core.info(`Getting region from AWS_REGION ${process.env.AWS_REGION}`)
+    return {
+      region: process.env.AWS_REGION
+    }
+  }
+  return {}
+}
+
+function createEC2Client(){
+  return new EC2Client(getRegion());
+}
+
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
   if (config.input.runnerHomeDir) {
@@ -34,7 +54,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
-  const ec2 = new EC2Client();
+  const ec2 = createEC2Client();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
@@ -62,7 +82,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
 }
 
 async function terminateEc2Instance() {
-  const ec2 = new EC2Client();
+  const ec2 = createEC2Client();
 
   const params = {
     InstanceIds: [config.input.ec2InstanceId]
@@ -79,7 +99,7 @@ async function terminateEc2Instance() {
 }
 
 async function waitForInstanceRunning(ec2InstanceId) {
-  const ec2 = new EC2Client();
+  const ec2 = createEC2Client();
   try {
     core.info(`Cheking for instance ${ec2InstanceId} to be up and running`)
     await waitUntilInstanceRunning(
