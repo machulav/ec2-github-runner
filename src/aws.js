@@ -79,8 +79,14 @@ async function terminateEc2Instance() {
 }
 
 async function waitForInstanceRunning(ec2InstanceId) {
+  const ec2 = new EC2Client();
   try {
-    await waitUntilInstanceRunning({}, {
+    core.info(`Cheking for instance ${ec2InstanceId} to be up and running`)
+    await waitUntilInstanceRunning(
+      {
+        client: ec2,
+        maxWaitTime: 300,
+      }, {
       Filters: [
         {
           Name: 'instance-id',
