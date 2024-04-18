@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 16 # Node v16 is required for the @vercel/ncc to work. TODO: update the package tool and then update the node version here.
+          node-version: 20
 
       - name: Install packages
         run: npm ci
