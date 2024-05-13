@@ -1,6 +1,6 @@
 name: On-demand self-hosted AWS EC2 runner for GitHub Actions
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
-author: Volodymyr Machula
+author: Zeal Corp
 branding:
   icon: 'box'
   color: 'orange'

@@ -1,15 +1,15 @@
 {
   "name": "ec2-github-runner",
   "description": "GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.",
-  "author": "Volodymyr Machula",
+  "author": "Zeal",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:machulav/ec2-github-runner.git"
+    "url": "git@github.com:zeal-corp/ec2-github-runner.git"
   },
-  "homepage": "https://github.com/machulav/ec2-github-runner#readme",
+  "homepage": "https://github.com/zeal-corp/ec2-github-runner#readme",
   "bugs": {
-    "url": "https://github.com/machulav/ec2-github-runner/issues"
+    "url": "https://github.com/zeal-corp/ec2-github-runner/issues"
   },
   "scripts": {
     "index": "node -r dotenv/config ./src/index.js",
