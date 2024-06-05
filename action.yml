@@ -1,4 +1,4 @@
-name: On-demand self-hosted AWS EC2 runner for GitHub Actions
+name: On-demand self-hosted AWS EC2 runner for GitHub Actions with windows support
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
 author: Volodymyr Machula
 branding:
@@ -25,6 +25,13 @@ inputs:
       EC2 Instance Type. 
       This input is required if you use the 'start' mode.
     required: false
+  ec2-os:
+     description: >-
+       Base OS type of the EC2 image (AMI). The new runner needs to be configured based on OS and architecture:
+         - 'windows'
+         - 'linux'
+     required: false
+     default: linux
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
@@ -42,6 +49,10 @@ inputs:
       Name of the unique label assigned to the runner.
       The label is used to remove the runner from GitHub when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
+    required: false
+  number-of-instances:
+    description: >-
+      The number of instances to be launched
     required: false
   ec2-instance-id:
     description: >-
@@ -64,6 +75,10 @@ inputs:
   runner-home-dir:
     description: >-
       Directory that contains actions-runner software and scripts. E.g. /home/runner/actions-runner.
+    required: false
+  aws-key-pair-name:
+    description: >-
+      The AWS Key Pair Name to be associated to the instance
     required: false
   pre-runner-script:
     description: >-
