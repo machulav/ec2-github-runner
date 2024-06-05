@@ -12,7 +12,7 @@ class Config {
       securityGroupId: core.getInput('security-group-id'),
       label: core.getInput('label'),
       numberOfInstances: core.getInput('number-of-instances'),
-      ec2InstanceIds: core.getInput('ec2-instance-ids'),
+      ec2InstanceIds: core.getInput('ec2-instance-id'),
       ec2Os: core.getInput('ec2-os'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),

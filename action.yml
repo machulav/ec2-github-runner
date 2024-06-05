@@ -54,7 +54,7 @@ inputs:
     description: >-
       The number of instances to be launched
     required: false
-  ec2-instance-ids:
+  ec2-instance-id:
     description: >-
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
