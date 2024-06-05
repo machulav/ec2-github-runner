@@ -104,9 +104,9 @@ async function startEc2Instances(label, githubRegistrationToken) {
 
 async function terminateEc2Instances() {
   const client = new EC2Client();
-
+  const ec2InstanceIds = JSON.parse(config.input.ec2InstanceIds);
   const params = {
-    InstanceIds: config.input.ec2InstanceIds,
+    InstanceIds: ec2InstanceIds,
   };
 
   const command = new TerminateInstancesCommand(params);
