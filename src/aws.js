@@ -70,16 +70,18 @@ function buildUserDataScript(githubRegistrationToken, label) {
   }
 }
 
-async function startEc2Instance(label, githubRegistrationToken) {
+async function startEc2Instances(label, githubRegistrationToken) {
   const client = new EC2Client();
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
+  const numberOfInstances = config.input.numberOfInstances || 1;
+
   const params = {
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
-    MinCount: 1,
-    MaxCount: 1,
+    MinCount: numberOfInstances,
+    MaxCount: numberOfInstances,
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
     SubnetId: config.input.subnetId,
     SecurityGroupIds: [config.input.securityGroupId],
@@ -91,52 +93,52 @@ async function startEc2Instance(label, githubRegistrationToken) {
 
   try {
     const result = await client.send(command);
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
+    const ec2InstanceIds = result.Instances.map(instance => instance.InstanceId);
+    core.info(`AWS EC2 instance ${ec2InstanceIds} is started`);
+    return ec2InstanceIds;
   } catch (error) {
     core.error('AWS EC2 instance starting error');
     throw error;
   }
 }
 
-async function terminateEc2Instance() {
+async function terminateEc2Instances() {
   const client = new EC2Client();
 
   const params = {
-    InstanceIds: [config.input.ec2InstanceId],
+    InstanceIds: config.input.ec2InstanceIds,
   };
 
   const command = new TerminateInstancesCommand(params);
 
   try {
     await client.send(command);
-    core.info(`AWS EC2 instance ${config.input.ec2InstanceId} is terminated`);
+    core.info(`AWS EC2 instance ${config.input.ec2InstanceIds} is terminated`);
 
   } catch (error) {
-    core.error(`AWS EC2 instance ${config.input.ec2InstanceId} termination error`);
+    core.error(`AWS EC2 instance ${config.input.ec2InstanceIds} termination error`);
     throw error;
   }
 }
 
-async function waitForInstanceRunning(ec2InstanceId) {
+async function waitForInstancesRunning(ec2InstanceIds) {
   const client = new EC2Client();
 
   const params = {
-    InstanceIds: [ec2InstanceId],
+    InstanceIds: ec2InstanceIds,
   };
 
   try {
     await waitUntilInstanceRunning({client, maxWaitTime: 30, minDelay: 3}, params);
-    core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
+    core.info(`AWS EC2 instance ${ec2InstanceIds} is up and running`);
   } catch (error) {
-    core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
+    core.error(`AWS EC2 instance ${ec2InstanceIds} initialization error`);
     throw error;
   }
 }
 
 module.exports = {
-  startEc2Instance,
-  terminateEc2Instance,
-  waitForInstanceRunning,
+  startEc2Instances,
+  terminateEc2Instances,
+  waitForInstancesRunning,
 };

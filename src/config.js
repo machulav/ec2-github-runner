@@ -11,7 +11,8 @@ class Config {
       subnetId: core.getInput('subnet-id'),
       securityGroupId: core.getInput('security-group-id'),
       label: core.getInput('label'),
-      ec2InstanceId: core.getInput('ec2-instance-id'),
+      numberOfInstances: core.getInput('number-of-instances'),
+      ec2InstanceIds: core.getInput('ec2-instance-ids'),
       ec2Os: core.getInput('ec2-os'),
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
@@ -53,7 +54,7 @@ class Config {
         throw new Error(`Wrong ec2-os. Allowed values: windows or linux.`);
       }
     } else if (this.input.mode === 'stop') {
-      if (!this.input.label || !this.input.ec2InstanceId) {
+      if (!this.input.label || !this.input.ec2InstanceIds) {
         throw new Error(`Not all the required inputs are provided for the 'stop' mode`);
       }
     } else {
