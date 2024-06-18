@@ -15,6 +15,12 @@ inputs:
     description: >-
       GitHub Personal Access Token with the 'repo' scope assigned.
     required: true
+  github-token-type:
+    description: >-
+      Github Token Type. 
+      Indicates whether the github access token is of the original 'classic', or the new 'fine-grained' Type.
+      This input has the default value of 'classic'
+    required: false
   ec2-image-id:
     description: >-
       EC2 Image Id (AMI). The new runner will be launched from this image.
