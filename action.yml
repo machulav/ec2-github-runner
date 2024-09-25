@@ -69,6 +69,14 @@ inputs:
     description: >-
       Specifies bash commands to run before the runner starts. It's useful for installing dependencies with apt-get, yum, dnf, etc.
     required: false
+  storage-size:
+    description: >-
+      Specifies the root volume size in GB.
+    required: false
+  storage-device:
+    description: >-
+      Specifies the volume device name to apply storage-size for. Defaults to /dev/sda1.
+    required: false
 
 outputs:
   label:
