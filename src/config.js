@@ -15,6 +15,7 @@ class Config {
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
       preRunnerScript: core.getInput('pre-runner-script'),
+      timeout: Number(core.getInput('timeout')),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -41,6 +42,10 @@ class Config {
 
     if (!this.input.githubToken) {
       throw new Error(`The 'github-token' input is not specified`);
+    }
+
+    if (Number.isNaN(this.input.timeout)) {
+      throw new Error(`Timeout must be a number`);
     }
 
     if (this.input.mode === 'start') {
