@@ -15,6 +15,7 @@ class Config {
       iamRoleName: core.getInput('iam-role-name'),
       runnerHomeDir: core.getInput('runner-home-dir'),
       preRunnerScript: core.getInput('pre-runner-script'),
+      runnerName: core.getInput('runner-name'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
@@ -28,7 +29,7 @@ class Config {
     // provided by the GitHub Action on the runtime
     this.githubContext = {
       owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      repo: github.context.repo.repo,      
     };
 
     //
