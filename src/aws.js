@@ -1,4 +1,4 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning  } = require('@aws-sdk/client-ec2');
+const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning } = require('@aws-sdk/client-ec2');
 
 const core = require('@actions/core');
 const config = require('./config');
@@ -15,7 +15,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'source pre-runner-script.sh',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh'
+      './run.sh',
     ];
   } else {
     return [
@@ -28,7 +28,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.313.0.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
-      './run.sh'
+      './run.sh',
     ];
   }
 }
@@ -47,7 +47,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
     SubnetId: config.input.subnetId,
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
     IamInstanceProfile: { Name: config.input.iamRoleName },
-    TagSpecifications: config.tagSpecifications
+    TagSpecifications: config.tagSpecifications,
   };
 
   try {
@@ -65,7 +65,7 @@ async function terminateEc2Instance() {
   const ec2 = new EC2Client();
 
   const params = {
-    InstanceIds: [config.input.ec2InstanceId]
+    InstanceIds: [config.input.ec2InstanceId],
   };
 
   try {
@@ -81,21 +81,21 @@ async function terminateEc2Instance() {
 async function waitForInstanceRunning(ec2InstanceId) {
   const ec2 = new EC2Client();
   try {
-    core.info(`Cheking for instance ${ec2InstanceId} to be up and running`)
+    core.info(`Cheking for instance ${ec2InstanceId} to be up and running`);
     await waitUntilInstanceRunning(
       {
         client: ec2,
         maxWaitTime: 300,
-      }, {
-      Filters: [
-        {
-          Name: 'instance-id',
-          Values: [
-            ec2InstanceId,
-          ],
-        },
-      ],
-    });
+      },
+      {
+        Filters: [
+          {
+            Name: 'instance-id',
+            Values: [ec2InstanceId],
+          },
+        ],
+      },
+    );
 
     core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
     return;
@@ -108,5 +108,5 @@ async function waitForInstanceRunning(ec2InstanceId) {
 module.exports = {
   startEc2Instance,
   terminateEc2Instance,
-  waitForInstanceRunning
+  waitForInstanceRunning,
 };
