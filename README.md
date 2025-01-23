@@ -141,7 +141,9 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    These example policies above are provided as a guide. They can and most likely should be limited even more by specifying the resources you use.
 
-   [!NOTE] If you are planning on using Spot instances for your runner, AWS uses a service-linked role to provision the instances.
+   > [!NOTE]
+   > If you are planning on using Spot instances for your runner, AWS uses a service-linked role to provision the instances.
+   
    For this to work, at least one of the following must be true:
    - The service-linked role exists already. This happens if you request a Spot instance via the AWS Console interface.
    - You create the service-linked role via the Console, AWS CLI or AWS API.
