@@ -141,6 +141,13 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    These example policies above are provided as a guide. They can and most likely should be limited even more by specifying the resources you use.
 
+   [!NOTE] If you are planning on using Spot instances for your runner, AWS uses a service-linked role to provision the instances.
+   For this to work, at least one of the following must be true:
+   - The service-linked role exists already. This happens if you request a Spot instance via the AWS Console interface.
+   - You create the service-linked role via the Console, AWS CLI or AWS API.
+   - You grant the IAM role above permissions to create the service-linked role at runtime.
+   See the docs [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create-service-linked-role.html) and [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/service-linked-roles-spot-instance-requests.html) for more details.
+
 2. Add the keys to GitHub secrets.
 3. Use the [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) action to set up the keys as environment variables.
 
@@ -207,6 +214,7 @@ Now you're ready to go!
 | `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
 | `pre-runner-script`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies bash commands to run before the runner starts.  It's useful for installing dependencies with apt-get, yum, dnf, etc. For example:<pre>          - name: Start EC2 runner<br>            with:<br>              mode: start<br>              ...<br>              pre-runner-script: \|<br>                 sudo yum update -y && \ <br>                 sudo yum install docker git libicu -y<br>                 sudo systemctl enable docker</pre>
 <br><br> |
+| `market-type` | Optional. Used only with the `start` mode. | The only valid option is `spot`. If `spot` is specified, a Spot instance will be requested. If left unspecified, an on-demand instance will be provisioned. |
 
 ### Environment variables
 
