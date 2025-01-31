@@ -62,6 +62,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions(),
+    BlockDeviceMappings: config.input.blockDeviceMappings,
+    KeyName: config.input.keyName,
   };
 
   try {

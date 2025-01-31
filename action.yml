@@ -73,6 +73,14 @@ inputs:
     description: >-
       Specifies the market (purchasing) option for the instance:
           - 'spot' - Use a spot instance
+  block-device-mapping:
+    description: >-
+      JSON string of EC2 BlockDeviceMapping (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-blockdev-mapping.html).
+    required: false
+    default: '[]'
+  key-name:
+    description: >-
+      Assign SSH key-pair name to an instance.  This can be useful for SSHing into an instance for debugging.
     required: false
 
 outputs:
