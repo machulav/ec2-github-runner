@@ -11,7 +11,7 @@ async function getRunner(label) {
   try {
     const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
     const foundRunners = _.filter(runners, { labels: [{ name: label }] });
-    return foundRunners.length > 0 ? foundRunners[0] : null;
+    return foundRunners.length > 0 ? foundRunners : null;
   } catch (error) {
     return null;
   }
@@ -32,29 +32,34 @@ async function getRegistrationToken() {
 }
 
 async function removeRunner() {
-  const runner = await getRunner(config.input.label);
+  const runners = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
 
   // skip the runner removal process if the runner is not found
-  if (!runner) {
+  if (!runners) {
     core.info(`GitHub self-hosted runner with label ${config.input.label} is not found, so the removal is skipped`);
     return;
   }
 
-  try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
-    core.info(`GitHub self-hosted runner ${runner.name} is removed`);
-    return;
-  } catch (error) {
-    core.error('GitHub self-hosted runner removal error');
-    throw error;
+  const errors = [];
+  for (const runner of runners) {
+    try {
+      await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+      core.info(`GitHub self-hosted runner ${runner.name} is removed`);
+    } catch (error) {
+      core.error(`GitHub self-hosted runner ${runner} removal error: ${error}`);
+      errors.push(error);
+    }
+  }
+  if (errors.length > 0) {
+    core.setFailed('Failures occurred when removing runners.');
   }
 }
 
 async function waitForRunnerRegistered(label) {
   const timeoutMinutes = 5;
-  const retryIntervalSeconds = 10;
-  const quietPeriodSeconds = 30;
+  const retryIntervalSeconds = 4;
+  const quietPeriodSeconds = 17;
   let waitSeconds = 0;
 
   core.info(`Waiting ${quietPeriodSeconds}s for the AWS EC2 instance to be registered in GitHub as a new self-hosted runner`);
@@ -63,7 +68,7 @@ async function waitForRunnerRegistered(label) {
 
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
-      const runner = await getRunner(label);
+      const runners = await getRunner(label);
 
       if (waitSeconds > timeoutMinutes * 60) {
         core.error('GitHub self-hosted runner registration error');
@@ -73,8 +78,8 @@ async function waitForRunnerRegistered(label) {
         );
       }
 
-      if (runner && runner.status === 'online') {
-        core.info(`GitHub self-hosted runner ${runner.name} is registered and ready to use`);
+      if (runners && runners.every((runner => runner.status === 'online'))) {
+        core.info(`GitHub self-hosted runners ${runners} are registered and ready to use`);
         clearInterval(interval);
         resolve();
       } else {
