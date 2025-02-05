@@ -1,5 +1,5 @@
-name: On-demand self-hosted AWS EC2 runner for GitHub Actions
-description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
+name: On-demand self-hosted AWS EC2 runnerS for GitHub Actions
+description: GitHub Action for automatic creation and registration AWS EC2 instances as a GitHub Actions self-hosted runners.
 author: Volodymyr Machula
 branding:
   icon: 'box'
@@ -43,12 +43,13 @@ inputs:
       The label is used to remove the runner from GitHub when the runner is not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
-  ec2-instance-id:
+  ec2-instance-ids:
     description: >-
-      EC2 Instance Id of the created runner.
-      The id is used to terminate the EC2 instance when the runner is not needed anymore.
+      EC2 Instance Ids of the created runners.
+      The ids are used to terminate the EC2 instances when the runners are not needed anymore.
       This input is required if you use the 'stop' mode.
     required: false
+    default: 'null'
   iam-role-name:
     description: >-
       IAM Role Name to attach to the created EC2 instance.
@@ -74,6 +75,11 @@ inputs:
       Specifies the market (purchasing) option for the instance:
           - 'spot' - Use a spot instance
     required: false
+  runner-count:
+    description: >-
+      Number of instances to create.
+    required: false
+    default: '1'
 
 outputs:
   label:
@@ -82,10 +88,10 @@ outputs:
       The label is used in two cases:
       - to use as the input of 'runs-on' property for the following jobs;
       - to remove the runner from GitHub when it is not needed anymore.
-  ec2-instance-id:
+  ec2-instance-ids:
     description: >-
-      EC2 Instance Id of the created runner.
-      The id is used to terminate the EC2 instance when the runner is not needed anymore.
+      EC2 Instance Ids of the created runners.
+      The ids are used to terminate the EC2 instances when the runners are not needed anymore.
 runs:
   using: node20
   main: ./dist/index.js
