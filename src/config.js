@@ -16,6 +16,7 @@ class Config {
       runnerHomeDir: core.getInput('runner-home-dir'),
       preRunnerScript: core.getInput('pre-runner-script'),
       marketType: core.getInput('market-type'),
+      ec2VolumeSize: core.getInput('ec2-volume-size'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

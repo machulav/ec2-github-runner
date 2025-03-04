@@ -74,6 +74,10 @@ inputs:
       Specifies the market (purchasing) option for the instance:
           - 'spot' - Use a spot instance
     required: false
+  ec2-volume-size:
+    description: >-
+      Defines the size of the EC2 Volume in GB, will use the AWS default of 16 GB if not provided.
+    required: false
 
 outputs:
   label:
