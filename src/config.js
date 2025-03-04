@@ -20,7 +20,8 @@ class Config {
       startupTimeoutMinutes: core.getInput('startup-timeout-minutes'),
       subnetId: core.getInput('subnet-id'),
       runAsService: core.getInput('run-runner-as-service') === 'true',
-      runAsUser: core.getInput('run-runner-as-user')
+      runAsUser: core.getInput('run-runner-as-user'),
+      ec2VolumeSize: core.getInput('ec2-volume-size'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

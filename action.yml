@@ -94,6 +94,11 @@ inputs:
   run-runner-as-user:
     description: >-
       Specify user under whom the runner service should run
+  ec2-volume-size:
+    description: >-
+      Defines the size of the EC2 Volume in GB, will use the AWS default of 16 GB if not provided.
+    required: false
+
 outputs:
   label:
     description: >-
