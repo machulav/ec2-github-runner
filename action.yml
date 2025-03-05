@@ -76,7 +76,13 @@ inputs:
     required: false
   ec2-volume-size:
     description: >-
-      Defines the size of the EC2 Volume in GB, will use the AWS default of 16 GB if not provided.
+      EC2 volume size in GB.
+    default: "8"
+    required: false
+  ec2-device-name:
+    description: >-
+      EC2 block device name.
+    default: /dev/sda1
     required: false
 
 outputs:

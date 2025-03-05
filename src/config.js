@@ -17,6 +17,7 @@ class Config {
       preRunnerScript: core.getInput('pre-runner-script'),
       marketType: core.getInput('market-type'),
       ec2VolumeSize: core.getInput('ec2-volume-size'),
+      ec2DeviceName: core.getInput('ec2-device-name'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
