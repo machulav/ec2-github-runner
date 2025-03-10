@@ -10,6 +10,8 @@ inputs:
       Specify here which mode you want to use:
         - 'start' - to start a new runner;
         - 'stop' - to stop the previously created runner.
+        - 'resume' - to start an existing instance.
+        - 'pause' - to stop the previously created runner.
     required: true
   github-token:
     description: >-
