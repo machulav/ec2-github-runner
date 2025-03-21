@@ -4,18 +4,21 @@ const github = require('@actions/github');
 class Config {
   constructor() {
     this.input = {
-      mode: core.getInput('mode'),
-      githubToken: core.getInput('github-token'),
       ec2ImageId: core.getInput('ec2-image-id'),
-      ec2InstanceType: core.getInput('ec2-instance-type'),
-      subnetId: core.getInput('subnet-id'),
-      securityGroupId: core.getInput('security-group-id'),
-      label: core.getInput('label'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
+      ec2InstanceType: core.getInput('ec2-instance-type'),
+      githubToken: core.getInput('github-token'),
       iamRoleName: core.getInput('iam-role-name'),
-      runnerHomeDir: core.getInput('runner-home-dir'),
-      preRunnerScript: core.getInput('pre-runner-script'),
+      label: core.getInput('label'),
       marketType: core.getInput('market-type'),
+      mode: core.getInput('mode'),
+      preRunnerScript: core.getInput('pre-runner-script'),
+      runnerHomeDir: core.getInput('runner-home-dir'),
+      securityGroupId: core.getInput('security-group-id'),
+      startupQuietPeriodSeconds: core.getInput('startup-quiet-period-seconds'),
+      startupRetryIntervalSeconds: core.getInput('startup-retry-interval-seconds'),
+      startupTimeoutMinutes: core.getInput('startup-timeout-minutes'),
+      subnetId: core.getInput('subnet-id'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
