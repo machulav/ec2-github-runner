@@ -217,6 +217,9 @@ Now you're ready to go!
 | `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
 | `pre-runner-script`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies bash commands to run before the runner starts.  It's useful for installing dependencies with apt-get, yum, dnf, etc. For example:<pre>          - name: Start EC2 runner<br>            with:<br>              mode: start<br>              ...<br>              pre-runner-script: \|<br>                 sudo yum update -y && \ <br>                 sudo yum install docker git libicu -y<br>                 sudo systemctl enable docker</pre> |
 | `market-type` | Optional. Used only with the `start` mode. | The only valid option is `spot`. If `spot` is specified, a Spot instance will be requested. If left unspecified, an on-demand instance will be provisioned. |
+| `startup-quiet-period-seconds` | Optional | Default: 30 |
+| `startup-retry-interval-seconds` | Optional | Default: 10 |
+| `startup-timeout-minutes` | Optional | Default: 5 | 
 
 ### Environment variables
 
