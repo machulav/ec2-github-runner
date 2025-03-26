@@ -86,7 +86,14 @@ inputs:
   startup-timeout-seconds:
     description: >-
       Specifies the timeout in seconds to register the runner after the quiet period.
+  run-runner-as-service:
+    type: boolean
+    description: >-
+      Start the runner as a service rather than using ./run.sh as root.
     required: false
+  run-runner-as-user:
+    description: >-
+      Specify user under whom the runner service should run
 outputs:
   label:
     description: >-
