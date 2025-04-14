@@ -58,11 +58,9 @@ function buildMarketOptions() {
 }
 
 async function startEc2Instance(label, githubRegistrationToken) {
-  const ec2 = new EC2Client();
-
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
-  const params = {
+  const baseParams = {
     ImageId: config.input.ec2ImageId,
     InstanceType: config.input.ec2InstanceType,
     MaxCount: 1,
@@ -72,18 +70,34 @@ async function startEc2Instance(label, githubRegistrationToken) {
     UserData: Buffer.from(userData.join('\n')).toString('base64'),
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
-    InstanceMarketOptions: buildMarketOptions(),
   };
 
-  try {
-    const result = await ec2.send(new RunInstancesCommand(params));
-    const ec2InstanceId = result.Instances[0].InstanceId;
-    core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
-    return ec2InstanceId;
-  } catch (error) {
-    core.error('AWS EC2 instance starting error');
-    throw error;
+  const paramsList = [
+    baseParams,
+    { ...baseParams, ...{ InstanceMarketOptions: buildMarketOptions() }},
+  ];
+
+  for (let i = 0; i < paramsList.length; i++) {
+    try {
+      // eslint-disable-next-line no-use-before-define
+      return await getEc2InstanceId(paramsList[i]);
+    } catch (error) {
+      if (i === paramsList.length - 1) {
+        core.error('AWS EC2 instance starting error');
+        throw error;
+      }
+    }
   }
+}
+
+async function getEc2InstanceId(params) {
+  const ec2 = new EC2Client();
+  const result = await ec2.send(new RunInstancesCommand(params));
+  const ec2InstanceId = result.Instances[0].InstanceId;
+
+  core.info(`AWS EC2 instance ${ec2InstanceId} is started`);
+
+  return ec2InstanceId;
 }
 
 async function terminateEc2Instance() {
