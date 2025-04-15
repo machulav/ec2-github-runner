@@ -188,7 +188,8 @@ Alternatively, you can use a vanilla EC2 AMI and set up the dependencies via `pr
 1. Create a new VPC and a new subnet in it.
    Or use the existing VPC and subnet.
 2. Create a new security group for the runners in the VPC.
-   Only the outbound traffic on port 443 should be allowed for pulling jobs from GitHub.
+   The outbound traffic on port 443 should be allowed for pulling jobs from GitHub. 
+   You may need to enable additional outbound traffic depends on the tools you're using. 
    No inbound traffic is required.
 
 **5. Configure the GitHub workflow**
