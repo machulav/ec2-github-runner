@@ -22,9 +22,32 @@ async function stop() {
   await gh.removeRunner();
 }
 
+async function resume() {
+  const label = config.input.label;
+  const githubRegistrationToken = await gh.getRegistrationToken();
+  const ec2InstanceId = config.input.ec2InstanceId;
+  await aws.waitForInstanceStopped(ec2InstanceId);
+  await aws.resumeEc2Instance(ec2InstanceId);
+  setOutput(label, ec2InstanceId);
+  await aws.waitForInstanceRunning(ec2InstanceId);
+  await gh.waitForRunnerRegistered(label);
+}
+
+async function pause() {
+  await aws.stopEc2Instance();
+}
+
 (async function () {
   try {
-    config.input.mode === 'start' ? await start() : await stop();
+    if (config.input.mode === 'start') {
+      await start();
+    } else if (config.input.mode === 'stop') {
+      await stop();
+    } else if (config.input.mode === 'resume') {
+      await resume();
+    } else if (config.input.mode === 'pause') {
+      await pause();
+    }
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);
