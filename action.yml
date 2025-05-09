@@ -1,6 +1,6 @@
 name: On-demand self-hosted AWS EC2 runner for GitHub Actions
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
-author: Volodymyr Machula
+author: Matthias Gubler
 branding:
   icon: 'box'
   color: 'orange'
@@ -68,6 +68,15 @@ inputs:
   pre-runner-script:
     description: >-
       Specifies bash commands to run before the runner starts. It's useful for installing dependencies with apt-get, yum, dnf, etc.
+    required: false
+  ec2-volume-size:
+    description: >-
+      Defines the size of the EC2 Volume in GB, will use the AMI default if not provided
+    required: false
+  ec2-volume-identifier:
+    description: >-
+      Specifies the name of the EC2 Volume in the AMI.
+      This input is required when specifying the volume size.
     required: false
   market-type:
     description: >-

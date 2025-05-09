@@ -1,4 +1,9 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning } = require('@aws-sdk/client-ec2');
+const {
+  EC2Client,
+  RunInstancesCommand,
+  TerminateInstancesCommand,
+  waitUntilInstanceRunning,
+} = require('@aws-sdk/client-ec2');
 
 const core = require('@actions/core');
 const config = require('./config');
@@ -9,7 +14,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
-    userData =  [
+    userData = [
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
@@ -57,6 +62,21 @@ function buildMarketOptions() {
   };
 }
 
+function buildBlockDeviceMappings() {
+  if (!config.input.volumeSize) {
+    return [];
+  }
+
+  return [
+    {
+      DeviceName: config.input.volumeIdentifier,
+      Ebs: {
+        VolumeSize: config.input.volumeSize,
+      },
+    },
+  ];
+}
+
 async function startEc2Instance(label, githubRegistrationToken) {
   const ec2 = new EC2Client();
 
@@ -73,6 +93,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
     IamInstanceProfile: { Name: config.input.iamRoleName },
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions(),
+    BlockDeviceMappings: buildBlockDeviceMappings(),
   };
 
   try {
