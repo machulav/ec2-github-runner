@@ -222,6 +222,7 @@ Now you're ready to go!
 | `startup-timeout-minutes` | Optional | Default: 5 | 
 | `ec2-volume-size` | Optional | Defines the size of the EC2 Volume in GB, will use the AWS default of 8 GB if not provided. |
 | `ec2-device-name` | Optional | Defines the device name used for the root volume. |
+| `ec2-volume-type` | Optional | Defines the device type used for the root volume. |
 
 ### Environment variables
 

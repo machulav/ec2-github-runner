@@ -78,6 +78,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
         DeviceName: config.input.ec2DeviceName,
         Ebs: {
           VolumeSize: config.input.ec2VolumeSize,
+          VolumeType: config.input.ec2VolumeType,
         },
       },
     ],

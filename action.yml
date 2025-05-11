@@ -104,6 +104,11 @@ inputs:
       EC2 block device name.
     default: /dev/sda1
     required: false
+  ec2-volume-type:
+    description: >-
+      EC2 block device type.
+    default: gp2
+    required: false
 
 outputs:
   label:

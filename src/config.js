@@ -23,6 +23,7 @@ class Config {
       runAsUser: core.getInput('run-runner-as-user'),
       ec2VolumeSize: core.getInput('ec2-volume-size'),
       ec2DeviceName: core.getInput('ec2-device-name'),
+      ec2VolumeType: core.getInput('ec2-volume-type'),
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
