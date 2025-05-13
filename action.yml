@@ -102,6 +102,7 @@ inputs:
     description: >-
       Specifies the timeout in minutes to register the runner after the quiet period.
     required: false
+    default: '5'
   run-runner-as-service:
     description: >-
       Start the runner as a service rather than using ./run.sh as root.
