@@ -15,10 +15,18 @@ inputs:
     description: >-
       GitHub Personal Access Token with the 'repo' scope assigned.
     required: true
+  availability-zones-config:
+    description: >-
+      JSON string array of objects with configurations for multiple availability zones.
+      Each object should contain 'imageId', 'subnetId', and 'securityGroupId'.
+      Example: '[{"imageId":"ami-123","subnetId":"subnet-123","securityGroupId":"sg-123"},{"imageId":"ami-456","subnetId":"subnet-456","securityGroupId":"sg-456"}]'
+      When provided, the action will try each configuration in sequence until a successful instance is launched.
+      This takes precedence over individual ec2-image-id, subnet-id, and security-group-id parameters.
+    required: false
   ec2-image-id:
     description: >-
       EC2 Image Id (AMI). The new runner will be launched from this image.
-      This input is required if you use the 'start' mode.
+      This input is required if you use the 'start' mode and don't provide availability-zones-config.
     required: false
   ec2-instance-type:
     description: >-
@@ -28,14 +36,14 @@ inputs:
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.
-      This input is required if you use the 'start' mode.
+      This input is required if you use the 'start' mode and don't provide availability-zones-config.
     required: false
   security-group-id:
     description: >-
       EC2 Security Group Id.
       The security group should belong to the same VPC as the specified subnet.
       The runner doesn't require any inbound traffic. However, outbound traffic should be allowed.
-      This input is required if you use the 'start' mode.
+      This input is required if you use the 'start' mode and don't provide availability-zones-config.
     required: false
   label:
     description: >-
@@ -88,17 +96,19 @@ inputs:
     description: >-
       Specifies the retry interval in seconds to register the runner after the quiet period.
     required: false
-  startup-timeout-seconds:
+  startup-timeout-minutes:
     description: >-
-      Specifies the timeout in seconds to register the runner after the quiet period.
+      Specifies the timeout in minutes to register the runner after the quiet period.
+    required: false
   run-runner-as-service:
-    type: boolean
     description: >-
       Start the runner as a service rather than using ./run.sh as root.
     required: false
+    default: 'false'
   run-runner-as-user:
     description: >-
       Specify user under whom the runner service should run
+    required: false
   ec2-volume-size:
     description: >-
       EC2 volume size in GB.
