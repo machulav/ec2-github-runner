@@ -123,8 +123,11 @@ class Config {
         throw new Error('Invalid `market-type` input. Allowed values: spot.');
       }
     } else if (this.input.mode === 'stop') {
-      if (!this.input.label || !this.input.ec2InstanceId) {
-        throw new Error(`Not all the required inputs are provided for the 'stop' mode`);
+      if (!this.input.ec2InstanceId) {
+        throw new Error(`The 'ec2-instance-id' input is required for the 'stop' mode.`);
+      }
+      if (!this.input.label) {
+        core.warning(`The 'label' input is not specified for the 'stop' mode. The runner will be removed by the 'ec2-instance-id' input.`);
       }
     } else {
       throw new Error('Wrong mode. Allowed values: start, stop.');
