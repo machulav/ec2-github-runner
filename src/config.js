@@ -28,6 +28,9 @@ class Config {
       availabilityZonesConfig: core.getInput('availability-zones-config'),
     };
 
+    // Get the AWS_REGION environment variable
+    this.defaultRegion = process.env.AWS_REGION;
+    
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
     this.tagSpecifications = null;
     if (tags.length > 0) {
@@ -81,6 +84,10 @@ class Config {
             if (!az.securityGroupId) {
               throw new Error(`Missing securityGroupId in availability-zones-config at index ${index}`);
             }
+            // Region is optional, will use the default if not specified
+            if (!az.region) {
+              az.region = this.defaultRegion;
+            }
           });
         } catch (error) {
           throw new Error(`Failed to parse availability-zones-config: ${error.message}`);
@@ -104,7 +111,9 @@ class Config {
         this.availabilityZones.push({
           imageId: this.input.ec2ImageId,
           subnetId: this.input.subnetId,
-          securityGroupId: this.input.securityGroupId
+          securityGroupId: this.input.securityGroupId,
+          // Add default region when using legacy configuration
+          region: this.defaultRegion
         });
         
         core.info('Using individual parameters as a single availability zone configuration');

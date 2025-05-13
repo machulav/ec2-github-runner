@@ -19,7 +19,9 @@ inputs:
     description: >-
       JSON string array of objects with configurations for multiple availability zones.
       Each object should contain 'imageId', 'subnetId', and 'securityGroupId'.
-      Example: '[{"imageId":"ami-123","subnetId":"subnet-123","securityGroupId":"sg-123"},{"imageId":"ami-456","subnetId":"subnet-456","securityGroupId":"sg-456"}]'
+      Optionally, you can specify 'region' to launch the instance in a specific AWS region.
+      If 'region' is not specified, the default AWS_REGION environment variable will be used.
+      Example: '[{"imageId":"ami-123","subnetId":"subnet-123","securityGroupId":"sg-123"},{"imageId":"ami-456","subnetId":"subnet-456","securityGroupId":"sg-456","region":"us-west-2"}]'
       When provided, the action will try each configuration in sequence until a successful instance is launched.
       This takes precedence over individual ec2-image-id, subnet-id, and security-group-id parameters.
     required: false
@@ -136,6 +138,10 @@ outputs:
     description: >-
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
+  region:
+    description: >-
+      AWS region where the EC2 instance was created.
+      This is useful for subsequent AWS operations on the instance.
 runs:
   using: node20
   main: ./dist/index.js

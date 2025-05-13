@@ -57,8 +57,10 @@ function buildMarketOptions() {
   };
 }
 
-async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken) {
-  const ec2 = new EC2Client();
+async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
+  // Region is always specified now, so we can directly use it
+  const ec2ClientOptions = { region };
+  const ec2 = new EC2Client(ec2ClientOptions);
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
 
@@ -101,8 +103,10 @@ async function startEc2Instance(label, githubRegistrationToken) {
   // Try each availability zone configuration in sequence
   for (let i = 0; i < config.availabilityZones.length; i++) {
     const azConfig = config.availabilityZones[i];
+    // Region is now always specified in the availability zone config
+    const region = azConfig.region;
     core.info(`Trying availability zone configuration ${i + 1}/${config.availabilityZones.length}`);
-    core.info(`Using imageId: ${azConfig.imageId}, subnetId: ${azConfig.subnetId}, securityGroupId: ${azConfig.securityGroupId}`);
+    core.info(`Using imageId: ${azConfig.imageId}, subnetId: ${azConfig.subnetId}, securityGroupId: ${azConfig.securityGroupId}, region: ${region}`);
     
     try {
       const ec2InstanceId = await createEc2InstanceWithParams(
@@ -110,13 +114,14 @@ async function startEc2Instance(label, githubRegistrationToken) {
         azConfig.subnetId,
         azConfig.securityGroupId,
         label,
-        githubRegistrationToken
+        githubRegistrationToken,
+        region
       );
       
-      core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1}`);
-      return ec2InstanceId;
+      core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1} in region ${region}`);
+      return { ec2InstanceId, region };
     } catch (error) {
-      const errorMessage = `Failed to start EC2 instance with configuration ${i + 1}: ${error.message}`;
+      const errorMessage = `Failed to start EC2 instance with configuration ${i + 1} in region ${region}: ${error.message}`;
       core.warning(errorMessage);
       errors.push(errorMessage);
       
@@ -147,8 +152,13 @@ async function terminateEc2Instance() {
   }
 }
 
-async function waitForInstanceRunning(ec2InstanceId) {
-  const ec2 = new EC2Client();
+async function waitForInstanceRunning(ec2InstanceId, region) {
+  // Region is always provided now
+  const ec2ClientOptions = { region };
+  const ec2 = new EC2Client(ec2ClientOptions);
+  
+  core.info(`Using region ${region} for checking instance ${ec2InstanceId} status`);
+  
   try {
     core.info(`Checking for instance ${ec2InstanceId} to be up and running`);
     await waitUntilInstanceRunning(
