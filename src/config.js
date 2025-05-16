@@ -20,7 +20,8 @@ class Config {
       startupTimeoutMinutes: core.getInput('startup-timeout-minutes'),
       subnetId: core.getInput('subnet-id'),
       runAsService: core.getInput('run-runner-as-service') === 'true',
-      runAsUser: core.getInput('run-runner-as-user')
+      runAsUser: core.getInput('run-runner-as-user'),
+      blockDeviceMappings: JSON.parse(core.getInput('block-device-mappings') || '[]')
     };
 
     const tags = JSON.parse(core.getInput('aws-resource-tags'));

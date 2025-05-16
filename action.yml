@@ -74,6 +74,11 @@ inputs:
       Specifies the market (purchasing) option for the instance:
           - 'spot' - Use a spot instance
     required: false
+  block-device-mappings:
+    description: >-
+      JSON string specifying the block device mappings for the EC2 instance.
+      Example: '[{"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3"}}]'
+    required: false
   startup-quiet-period-seconds:
     description: >-
       Specifies the quiet period in seconds after the instance starts.
