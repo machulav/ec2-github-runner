@@ -147,7 +147,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 > [!IMPORTANT]
 > If you are planning on using Spot instances for your runner, AWS uses a service-linked role to provision the instances.
-> 
+>
 > For this to work, at least one of the following must be true:
 > - The service-linked role exists already. This happens if you request a Spot instance via the AWS Console interface.
 > - You create the service-linked role via the Console, AWS CLI or AWS API.
@@ -189,7 +189,7 @@ Alternatively, you can use a vanilla EC2 AMI and set up the dependencies via `pr
    Or use the existing VPC and subnet.
 2. Create a new security group for the runners in the VPC.
    Only **outbound** traffic on port TCP/443 is required to pull jobs from GitHub.
-   No inbound traffic is required for this purpose, but if your workflow needs to access external repositories or internal SSH, other ports like TCP/22, TCP/80, etc ... may be required. 
+   No inbound traffic is required for this purpose, but if your workflow needs to access external repositories or internal SSH, other ports like TCP/22, TCP/80, etc ... may be required.
 
 **5. Configure the GitHub workflow**
 
@@ -220,7 +220,10 @@ Now you're ready to go!
 | `block-device-mappings` | Optional. Used only with the `start` mode. | JSON string specifying the block device mappings for the EC2 instance. For example: <br> <pre>[{"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3"}}]</pre> See <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html">AWS BlockDeviceMapping docs</a> for all options. |
 | `startup-quiet-period-seconds` | Optional | Default: 30 |
 | `startup-retry-interval-seconds` | Optional | Default: 10 |
-| `startup-timeout-minutes` | Optional | Default: 5 | 
+| `startup-timeout-minutes` | Optional | Default: 5 |
+| `ec2-volume-size` | Optional | Defines the size of the EC2 Volume in GB, will use the AWS default of 8 GB if not provided. |
+| `ec2-device-name` | Optional | Defines the device name used for the root volume. |
+| `ec2-volume-type` | Optional | Defines the device type used for the root volume. |
 
 ### Environment variables
 
