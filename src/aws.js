@@ -75,6 +75,10 @@ async function startEc2Instance(label, githubRegistrationToken) {
     InstanceMarketOptions: buildMarketOptions(),
   };
 
+  if (config.input.blockDeviceMappings.length > 0) {
+    params.BlockDeviceMappings = config.input.blockDeviceMappings;
+  }
+
   try {
     const result = await ec2.send(new RunInstancesCommand(params));
     const ec2InstanceId = result.Instances[0].InstanceId;
