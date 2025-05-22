@@ -24,9 +24,13 @@ class Config {
       ec2VolumeSize: core.getInput('ec2-volume-size'),
       ec2DeviceName: core.getInput('ec2-device-name'),
       ec2VolumeType: core.getInput('ec2-volume-type'),
-      blockDeviceMappings: JSON.parse(core.getInput('block-device-mappings') || '[]')
+      blockDeviceMappings: JSON.parse(core.getInput('block-device-mappings') || '[]'),
+      availabilityZonesConfig: core.getInput('availability-zones-config'),
     };
 
+    // Get the AWS_REGION environment variable
+    this.defaultRegion = process.env.AWS_REGION;
+    
     const tags = JSON.parse(core.getInput('aws-resource-tags'));
     this.tagSpecifications = null;
     if (tags.length > 0) {
@@ -56,17 +60,74 @@ class Config {
       throw new Error(`The 'github-token' input is not specified`);
     }
 
+    // Initialize availabilityZones as an empty array
+    this.availabilityZones = [];
+
     if (this.input.mode === 'start') {
-      if (!this.input.ec2ImageId || !this.input.ec2InstanceType || !this.input.subnetId || !this.input.securityGroupId) {
-        throw new Error(`Not all the required inputs are provided for the 'start' mode`);
+      // Parse availability zones config if provided
+      if (this.input.availabilityZonesConfig) {
+        try {
+          this.availabilityZones = JSON.parse(this.input.availabilityZonesConfig);
+          
+          // Validate each availability zone configuration
+          if (!Array.isArray(this.availabilityZones)) {
+            throw new Error('availability-zones-config must be a JSON array');
+          }
+          
+          this.availabilityZones.forEach((az, index) => {
+            if (!az.imageId) {
+              throw new Error(`Missing imageId in availability-zones-config at index ${index}`);
+            }
+            if (!az.subnetId) {
+              throw new Error(`Missing subnetId in availability-zones-config at index ${index}`);
+            }
+            if (!az.securityGroupId) {
+              throw new Error(`Missing securityGroupId in availability-zones-config at index ${index}`);
+            }
+            // Region is optional, will use the default if not specified
+            if (!az.region) {
+              az.region = this.defaultRegion;
+            }
+          });
+        } catch (error) {
+          throw new Error(`Failed to parse availability-zones-config: ${error.message}`);
+        }
+      }
+
+      // Check for required instance type regardless of config method
+      if (!this.input.ec2InstanceType) {
+        throw new Error(`The 'ec2-instance-type' input is required for the 'start' mode.`);
+      }
+
+      // If no availability zones config provided, check for individual parameters
+      if (this.availabilityZones.length === 0) {
+        if (!this.input.ec2ImageId || !this.input.subnetId || !this.input.securityGroupId) {
+          throw new Error(
+            `Either provide 'availability-zones-config' or all of the following: 'ec2-image-id', 'subnet-id', 'security-group-id'`
+          );
+        }
+        
+        // Convert individual parameters to a single availability zone config
+        this.availabilityZones.push({
+          imageId: this.input.ec2ImageId,
+          subnetId: this.input.subnetId,
+          securityGroupId: this.input.securityGroupId,
+          // Add default region when using legacy configuration
+          region: this.defaultRegion
+        });
+        
+        core.info('Using individual parameters as a single availability zone configuration');
       }
 
       if (this.marketType?.length > 0 && this.input.marketType !== 'spot') {
         throw new Error('Invalid `market-type` input. Allowed values: spot.');
       }
     } else if (this.input.mode === 'stop') {
-      if (!this.input.label || !this.input.ec2InstanceId) {
-        throw new Error(`Not all the required inputs are provided for the 'stop' mode`);
+      if (!this.input.ec2InstanceId) {
+        throw new Error(`The 'ec2-instance-id' input is required for the 'stop' mode.`);
+      }
+      if (!this.input.label) {
+        core.warning(`The 'label' input is not specified for the 'stop' mode. The runner will be removed by the 'ec2-instance-id' input.`);
       }
     } else {
       throw new Error('Wrong mode. Allowed values: start, stop.');
