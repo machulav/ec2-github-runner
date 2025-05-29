@@ -102,7 +102,6 @@ inputs:
   ec2-volume-size:
     description: >-
       EC2 volume size in GB.
-    default: "8"
     required: false
   ec2-device-name:
     description: >-
@@ -112,7 +111,6 @@ inputs:
   ec2-volume-type:
     description: >-
       EC2 block device type.
-    default: gp2
     required: false
 
 outputs:
