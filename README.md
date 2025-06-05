@@ -242,6 +242,8 @@ We recommend using [aws-actions/configure-aws-credentials](https://github.com/aw
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`                                                                                                                                                                      | Name of the unique label assigned to the runner. <br><br> The label is used in two cases: <br> - to use as the input of `runs-on` property for the following jobs; <br> - to remove the runner from GitHub when it is not needed anymore. |
 | `ec2-instance-id`                                                                                                                                                            | EC2 Instance Id of the created runner. <br><br> The id is used to terminate the EC2 instance when the runner is not needed anymore.                                                                                                       |
+| `region`                                                                                                                                                                      | AWS region where the EC2 instance was created. <br><br> This is useful for subsequent AWS operations on the instance.                                                                                                                     |
+
 
 ### Example
 
