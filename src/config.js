@@ -129,6 +129,14 @@ class Config {
       if (!this.input.label) {
         core.warning(`The 'label' input is not specified for the 'stop' mode. The runner will be removed by the 'ec2-instance-id' input.`);
       }
+    } else if (this.input.mode === 'resume') {
+      if (!this.input.ec2InstanceId || !this.input.label || !this.input.githubToken) {
+        throw new Error(`Not all the required inputs are provided for the 'resume' mode`);
+      }
+    } else if (this.input.mode === 'pause') {
+      if (!this.input.label || !this.input.ec2InstanceId) {
+        throw new Error(`Not all the required inputs are provided for the 'pause' mode`);
+      }
     } else {
       throw new Error('Wrong mode. Allowed values: start, stop.');
     }
