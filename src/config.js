@@ -21,6 +21,7 @@ class Config {
       subnetId: core.getInput('subnet-id'),
       runAsService: core.getInput('run-runner-as-service') === 'true',
       runAsUser: core.getInput('run-runner-as-user'),
+      runInOrgRunner: core.getInput('run-runner-in-org') === 'true',
       ec2VolumeSize: core.getInput('ec2-volume-size'),
       ec2DeviceName: core.getInput('ec2-device-name'),
       ec2VolumeType: core.getInput('ec2-volume-type'),

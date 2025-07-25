@@ -156,8 +156,10 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 **2. Prepare GitHub personal access token**
 
-1. Create a new GitHub personal access token with the `repo` scope.
-   The action will use the token for self-hosted runners management in the GitHub account on the repository level.
+1. Create a fine-grained personal access token with the required permissions:
+   - **Repository-level runners (default):** Repository permissions: Administration (read/write), Contents (read)
+   - **Organization-level runners:** Organization permissions: Self-hosted runners (read/write)
+   Repository permissions: Contents (read)
 2. Add the token to GitHub secrets.
 
 **3. Prepare EC2 image**
@@ -205,7 +207,7 @@ Now you're ready to go!
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Required                                   | Description                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mode`                                                                                                                                                                       | Always required.                           | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner.                                                                                                                                                                                               |
-| `github-token`                                                                                                                                                               | Always required.                           | GitHub Personal Access Token with the `repo` scope assigned.                                                                                                                                                                                                                                                                          |
+| `github-token`                                                                                                                                                               | Always required.                           | Fine-grained GitHub Personal Access Token with appropriate permissions (see setup instructions above).                                                                                                                                                                                                                                                                          |
 | `ec2-image-id`                                                                                                                                                               | Required if you use the `start` mode.      | EC2 Image Id (AMI). <br><br> The new runner will be launched from this image. <br><br> The action is compatible with Amazon Linux 2 images.                                                                                                                                                                                           |
 | `ec2-instance-type`                                                                                                                                                          | Required if you use the `start` mode.      | EC2 Instance Type.                                                                                                                                                                                                                                                                                                                    |
 | `subnet-id`                                                                                                                                                                  | Required if you use the `start` mode.      | VPC Subnet Id. <br><br> The subnet should belong to the same VPC as the specified security group.                                                                                                                                                                                                                                     |
@@ -224,6 +226,7 @@ Now you're ready to go!
 | `ec2-volume-size` | Optional | Defines the size of the EC2 Volume in GB, will use the AWS default of 8 GB if not provided. |
 | `ec2-device-name` | Optional | Defines the device name used for the root volume. |
 | `ec2-volume-type` | Optional | Defines the device type used for the root volume. |
+| `run-runner-in-org` | Optional | Default: false. When set to true, the runner will be registered at the organization level instead of the repository level. This allows using fine-grained personal access tokens with only the "Self-hosted runners" organization permission and "Contents" repository permission, avoiding the need for repository admin permissions. |
 
 ### Environment variables
 
@@ -270,6 +273,8 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          # Optional: Use organization-level runner for enhanced security
+          # run-runner-in-org: true
           ec2-image-id: ami-123
           ec2-instance-type: t3.nano
           subnet-id: subnet-123
@@ -310,6 +315,8 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          # Optional: Use organization-level runner for enhanced security
+          # run-runner-in-org: true
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
 ```
