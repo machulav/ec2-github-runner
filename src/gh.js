@@ -3,13 +3,15 @@ const github = require('@actions/github');
 const _ = require('lodash');
 const config = require('./config');
 
+const runnerBasePath = config.input.runInOrgRunner ? "/orgs/{owner}" : "/repos/{owner}/{repo}"
+
 // use the unique label to find the runner
 // as we don't have the runner's id, it's not possible to get it in any other way
 async function getRunner(label) {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+    const runners = await octokit.paginate(`GET ${runnerBasePath}/actions/runners`, config.githubContext);
     const foundRunners = _.filter(runners, { labels: [{ name: label }] });
     return foundRunners.length > 0 ? foundRunners[0] : null;
   } catch (error) {
@@ -22,7 +24,7 @@ async function getRegistrationToken() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
+    const response = await octokit.request(`POST ${runnerBasePath}/actions/runners/registration-token`, config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
@@ -42,7 +44,7 @@ async function removeRunner() {
   }
 
   try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+    await octokit.request(`DELETE ${runnerBasePath}/actions/runners/{runner_id}`, _.merge(config.githubContext, { runner_id: runner.id }));
     core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {

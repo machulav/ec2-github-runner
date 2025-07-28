@@ -112,6 +112,10 @@ inputs:
     description: >-
       Specify user under whom the runner service should run
     required: false
+  run-runner-in-org:
+    description: >-
+      Runner is run in repo by default, but can also be run under the org
+    required: false
   ec2-volume-size:
     description: >-
       EC2 volume size in GB.
