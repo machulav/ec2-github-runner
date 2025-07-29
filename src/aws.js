@@ -3,7 +3,7 @@ const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInst
 const core = require('@actions/core');
 const config = require('./config');
 
-const runnerBasePath = config.input.runInOrgRunner ? `/orgs/${config.githubContext.owner}` : `/repos/${config.githubContext.owner}/${config.githubContext.repo}`;
+const runnerBasePath = config.input.runInOrgRunner ? `/${config.githubContext.owner}` : `/${config.githubContext.owner}/${config.githubContext.repo}`;
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
