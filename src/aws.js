@@ -13,8 +13,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
+      'source /tmp/pre-runner-script.sh',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     ];
@@ -23,8 +22,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
+      'source /tmp/pre-runner-script.sh',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
       'RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | jq -r ".name" | tr -d "v")',
       'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
@@ -63,8 +61,21 @@ function buildUserDataScript(githubRegistrationToken, label) {
     });
   }
   
-  // Write the script file
+  // Write files
   yamlContent += 'write_files:\n';
+  
+  // Write pre-runner script if specified
+  if (config.input.preRunnerScript) {
+    yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
+    yamlContent += '    permissions: "0755"\n';
+    yamlContent += '    content: |\n';
+    
+    config.input.preRunnerScript.split('\n').forEach(line => {
+      yamlContent += `      ${line}\n`;
+    });
+  }
+  
+  // Write main setup script
   yamlContent += '  - path: /tmp/runner-setup.sh\n';
   yamlContent += '    permissions: "0755"\n';
   yamlContent += '    content: |\n';
