@@ -3,8 +3,8 @@ const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInst
 const core = require('@actions/core');
 const config = require('./config');
 
-// User data scripts are run as the root user
-function buildUserDataScript(githubRegistrationToken, label) {
+// Build the commands to run on the instance
+function buildRunCommands(githubRegistrationToken, label) {
   let userData;
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
@@ -45,6 +45,30 @@ function buildUserDataScript(githubRegistrationToken, label) {
   return userData;
 }
 
+// Build cloud-init YAML user data
+function buildUserDataScript(githubRegistrationToken, label) {
+  const runCommands = buildRunCommands(githubRegistrationToken, label);
+  
+  // Start with cloud-init header
+  let yamlContent = '#cloud-config\n';
+  
+  // Add packages if specified
+  if (config.input.packages && config.input.packages.length > 0) {
+    yamlContent += 'packages:\n';
+    config.input.packages.forEach(pkg => {
+      yamlContent += `  - ${pkg}\n`;
+    });
+  }
+  
+  // Add run commands
+  yamlContent += 'runcmd:\n';
+  runCommands.forEach(cmd => {
+    yamlContent += `  - ${cmd}\n`;
+  });
+  
+  return yamlContent;
+}
+
 function buildMarketOptions() {
   if (config.input.marketType !== 'spot') {
     return undefined;
@@ -72,7 +96,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
     MinCount: 1,
     SecurityGroupIds: [securityGroupId],
     SubnetId: subnetId,
-    UserData: Buffer.from(userData.join('\n')).toString('base64'),
+    UserData: Buffer.from(userData).toString('base64'),
     IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions(),
