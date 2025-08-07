@@ -49,6 +49,9 @@ function buildRunCommands(githubRegistrationToken, label) {
 function buildUserDataScript(githubRegistrationToken, label) {
   const runCommands = buildRunCommands(githubRegistrationToken, label);
   
+  // Create a script file with all commands to avoid YAML escaping issues
+  const scriptContent = runCommands.join('\n');
+  
   // Start with cloud-init header
   let yamlContent = '#cloud-config\n';
   
@@ -60,11 +63,20 @@ function buildUserDataScript(githubRegistrationToken, label) {
     });
   }
   
-  // Add run commands
-  yamlContent += 'runcmd:\n';
-  runCommands.forEach(cmd => {
-    yamlContent += `  - ${cmd}\n`;
+  // Write the script file
+  yamlContent += 'write_files:\n';
+  yamlContent += '  - path: /tmp/runner-setup.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
+  
+  // Add each line of the script with proper indentation
+  scriptContent.split('\n').forEach(line => {
+    yamlContent += `      ${line}\n`;
   });
+  
+  // Execute the script
+  yamlContent += 'runcmd:\n';
+  yamlContent += '  - /tmp/runner-setup.sh\n';
   
   return yamlContent;
 }
