@@ -64,15 +64,17 @@ function buildUserDataScript(githubRegistrationToken, label) {
   // Write files
   yamlContent += 'write_files:\n';
   
-  // Write pre-runner script if specified
+  // Always write pre-runner script (even if empty) since runner-setup.sh always sources it
+  yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
+  
   if (config.input.preRunnerScript) {
-    yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
-    yamlContent += '    permissions: "0755"\n';
-    yamlContent += '    content: |\n';
-    
     config.input.preRunnerScript.split('\n').forEach(line => {
       yamlContent += `      ${line}\n`;
     });
+  } else {
+    yamlContent += '      #!/bin/bash\n';
   }
   
   // Write main setup script
