@@ -20,7 +20,7 @@ function buildRunCommands(githubRegistrationToken, label) {
   } else {
     userData = [
       '#!/bin/bash',
-      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+      // 'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
       'source /tmp/pre-runner-script.sh',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
@@ -113,6 +113,8 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
   const ec2 = new EC2Client(ec2ClientOptions);
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
+  core.info('User data contents:');
+  core.info(userData);
 
   const params = {
     ImageId: imageId,
