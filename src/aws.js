@@ -24,7 +24,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       'mkdir actions-runner && cd actions-runner',
       'source /tmp/pre-runner-script.sh',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | jq -r ".name" | tr -d "v")',
+      `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name": "[^"]*' | sed 's/"tag_name": "//' | tr -d "v")`,
       'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
