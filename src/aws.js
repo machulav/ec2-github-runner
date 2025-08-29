@@ -113,8 +113,6 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
   const ec2 = new EC2Client(ec2ClientOptions);
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
-  core.info('User data contents:');
-  core.info(userData);
 
   const params = {
     ImageId: imageId,
