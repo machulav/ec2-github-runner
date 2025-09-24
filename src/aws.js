@@ -11,6 +11,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     userData = [
+      '#cloud-boothook',
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
@@ -21,6 +22,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     ];
   } else {
     userData = [
+      '#cloud-boothook',
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
