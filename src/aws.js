@@ -5,13 +5,13 @@ const config = require('./config');
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
-  let userData;
+  let scriptContent;
   const cmd = `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended ${config.input.disableEphemeralRunner ? '' : '--ephemeral'}`;
+  
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
-    userData = [
-      '#cloud-boothook',
+    scriptContent = [
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
@@ -21,8 +21,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       cmd
     ];
   } else {
-    userData = [
-      '#cloud-boothook',
+    scriptContent = [
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
@@ -35,16 +34,38 @@ function buildUserDataScript(githubRegistrationToken, label) {
       cmd
     ];
   }
+  
   if (config.input.runAsUser) {
-    userData.push(`chown -R ${config.input.runAsUser} .`);
+    scriptContent.push(`chown -R ${config.input.runAsUser} .`);
   }
+  
   if (config.input.runAsService) {
-    userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
-    userData.push('./svc.sh start');
+    scriptContent.push(`./svc.sh install ${config.input.runAsUser || ''}`);
+    scriptContent.push('./svc.sh start');
   } else {
-    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
+    scriptContent.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
   }
-  return userData;
+
+  // Create MIME multipart format
+  const boundary = '//';
+  
+  const mimeData = [
+    'Content-Type: multipart/mixed; boundary="' + boundary + '"',
+    'MIME-Version: 1.0',
+    '',
+    '--' + boundary,
+    'Content-Type: text/x-shellscript; charset="us-ascii"',
+    'MIME-Version: 1.0',
+    'Content-Transfer-Encoding: 7bit',
+    'Content-Disposition: attachment; filename="userdata.txt"',
+    '',
+    scriptContent.join('\n'),
+    '',
+    '--' + boundary + '--',
+    ''
+  ];
+
+  return mimeData.join('\n');
 }
 
 function buildMarketOptions() {
