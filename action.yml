@@ -125,6 +125,10 @@ inputs:
     description: >-
       EC2 block device type.
     required: false
+  key-name:
+    description: >-
+      Key to use for the created EC2 instance
+    required: false
 
 outputs:
   label:
