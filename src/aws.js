@@ -87,7 +87,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
   const ec2 = new EC2Client(ec2ClientOptions);
 
   const userData = buildUserDataScript(githubRegistrationToken, label);
-  core.info('Executing user data script: ' + userData.join('\n').replace(githubRegistrationToken, '<redacted>'));
+  core.info('Executing user data script: ' + userData.replace(githubRegistrationToken, '<redacted>'));
 
   const params = {
     ImageId: imageId,
@@ -96,7 +96,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
     MinCount: 1,
     SecurityGroupIds: [securityGroupId],
     SubnetId: subnetId,
-    UserData: Buffer.from(userData.join('\n')).toString('base64'),
+    UserData: Buffer.from(userData).toString('base64'),
     IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions()
