@@ -125,7 +125,10 @@ inputs:
     description: >-
       EC2 block device type.
     required: false
-
+  metadata-options:
+    description: >-
+      JSON string specifying the metadata options for the EC2 instance.
+      Example: '{"HttpTokens": "required", "HttpEndpoint": "enabled", "HttpPutResponseHopLimit": 2, "InstanceMetadataTags": "enabled"}'
 outputs:
   label:
     description: >-
