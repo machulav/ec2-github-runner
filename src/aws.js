@@ -75,6 +75,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
     IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions(),
+    MetadataOptions: Object.keys(config.input.metadataOptions).length > 0 ? config.input.metadataOptions : undefined,
   };
 
   if (config.input.ec2VolumeSize !== '' || config.input.ec2VolumeType !== '') {
