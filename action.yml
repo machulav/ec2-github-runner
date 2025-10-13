@@ -125,10 +125,6 @@ inputs:
     description: >-
       EC2 block device type.
     required: false
-  runner-version:
-    description: >-
-      Version of the github runner to install.
-    required: true
 
 outputs:
   label:

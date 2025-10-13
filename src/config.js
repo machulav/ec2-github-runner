@@ -26,7 +26,6 @@ class Config {
       ec2VolumeType: core.getInput('ec2-volume-type'),
       blockDeviceMappings: JSON.parse(core.getInput('block-device-mappings') || '[]'),
       availabilityZonesConfig: core.getInput('availability-zones-config'),
-      runnerVersion: core.getInput('runner-version'),
       disableEphemeralRunner: core.getInput('disable-ephemeral-runner') === 'true',
     };
 
