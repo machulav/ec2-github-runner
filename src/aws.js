@@ -3,8 +3,8 @@ const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInst
 const core = require('@actions/core');
 const config = require('./config');
 
-// User data scripts are run as the root user
-function buildUserDataScript(githubRegistrationToken, label) {
+// Build the commands to run on the instance
+function buildRunCommands(githubRegistrationToken, label) {
   let userData;
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
@@ -13,8 +13,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       `cd "${config.input.runnerHomeDir}"`,
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
+      'source /tmp/pre-runner-script.sh',
       'export RUNNER_ALLOW_RUNASROOT=1',
       `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label}`,
     ];
@@ -23,10 +22,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
       'mkdir actions-runner && cd actions-runner',
-      `echo "${config.input.preRunnerScript}" > pre-runner-script.sh`,
-      'source pre-runner-script.sh',
+      'source /tmp/pre-runner-script.sh',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | jq -r ".name" | tr -d "v")',
+      `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/' | tr -d "v")`,
       'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
       'export RUNNER_ALLOW_RUNASROOT=1',
@@ -43,6 +41,57 @@ function buildUserDataScript(githubRegistrationToken, label) {
     userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
   }
   return userData;
+}
+
+// Build cloud-init YAML user data
+function buildUserDataScript(githubRegistrationToken, label) {
+  const runCommands = buildRunCommands(githubRegistrationToken, label);
+  
+  // Create a script file with all commands to avoid YAML escaping issues
+  const scriptContent = runCommands.join('\n');
+  
+  // Start with cloud-init header
+  let yamlContent = '#cloud-config\n';
+  
+  // Add packages if specified
+  if (config.input.packages && config.input.packages.length > 0) {
+    yamlContent += 'packages:\n';
+    config.input.packages.forEach(pkg => {
+      yamlContent += `  - ${pkg}\n`;
+    });
+  }
+  
+  // Write files
+  yamlContent += 'write_files:\n';
+  
+  // Always write pre-runner script (even if empty) since runner-setup.sh always sources it
+  yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
+  
+  if (config.input.preRunnerScript) {
+    config.input.preRunnerScript.split('\n').forEach(line => {
+      yamlContent += `      ${line}\n`;
+    });
+  } else {
+    yamlContent += '      #!/bin/bash\n';
+  }
+  
+  // Write main setup script
+  yamlContent += '  - path: /tmp/runner-setup.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
+  
+  // Add each line of the script with proper indentation
+  scriptContent.split('\n').forEach(line => {
+    yamlContent += `      ${line}\n`;
+  });
+  
+  // Execute the script
+  yamlContent += 'runcmd:\n';
+  yamlContent += '  - /tmp/runner-setup.sh\n';
+  
+  return yamlContent;
 }
 
 function buildMarketOptions() {
@@ -72,7 +121,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
     MinCount: 1,
     SecurityGroupIds: [securityGroupId],
     SubnetId: subnetId,
-    UserData: Buffer.from(userData.join('\n')).toString('base64'),
+    UserData: Buffer.from(userData).toString('base64'),
     IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
     TagSpecifications: config.tagSpecifications,
     InstanceMarketOptions: buildMarketOptions(),

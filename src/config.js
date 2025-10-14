@@ -27,6 +27,7 @@ class Config {
       blockDeviceMappings: JSON.parse(core.getInput('block-device-mappings') || '[]'),
       availabilityZonesConfig: core.getInput('availability-zones-config'),
       metadataOptions: JSON.parse(core.getInput('metadata-options') || '{}'),
+      packages: JSON.parse(core.getInput('packages') || '[]'),
     };
 
     // Get the AWS_REGION environment variable

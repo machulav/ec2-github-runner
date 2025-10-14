@@ -129,6 +129,12 @@ inputs:
     description: >-
       JSON string specifying the metadata options for the EC2 instance.
       Example: '{"HttpTokens": "required", "HttpEndpoint": "enabled", "HttpPutResponseHopLimit": 2, "InstanceMetadataTags": "enabled"}'
+  packages:
+    description: >-
+      JSON array of packages to install via cloud-init.
+      Example: '["git", "docker.io", "nodejs"]'
+    required: false
+    default: '[]'
 outputs:
   label:
     description: >-
