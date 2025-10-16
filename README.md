@@ -1,14 +1,10 @@
 # On-demand self-hosted AWS EC2 runner for GitHub Actions
-
-⚠️ If you like the project, please consider [supporting Ukraine](https://prytulafoundation.org/en) in a [war](https://en.wikipedia.org/wiki/Russian_invasion_of_Ukraine) against russian occupants. Any help would be much appreciated!
-
-[<img src="https://user-images.githubusercontent.com/2857712/156607570-8c9fd15b-8b44-41b3-bec3-312267af324f.png" width="500">](https://supportukrainenow.org)
-
-(image by [Nina Dzyvulska](https://www.behance.net/ninadz))
+This repo is forked from [this](https://github.com/machulav/ec2-github-runner) repo. Our fork adds the following features:
+- Create GitHub runner instances with unattended mode (avoiding manual entry)
+- Make runner registration script available in action logs
+- Use mime-multi part format for user data scripts ([documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html)).
 
 ---
-
-[![awesome-runners](https://img.shields.io/badge/listed%20on-awesome--runners-blue.svg)](https://github.com/jonico/awesome-runners)
 
 Start your EC2 [self-hosted runner](https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners) right before you need it.
 Run the job on it.
