@@ -1,4 +1,12 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning } = require('@aws-sdk/client-ec2');
+const {
+  EC2Client,
+  RunInstancesCommand,
+  TerminateInstancesCommand,
+  waitUntilInstanceRunning,
+  CreateLaunchTemplateCommand,
+  DeleteLaunchTemplateCommand,
+  CreateFleetCommand
+} = require('@aws-sdk/client-ec2');
 
 const core = require('@actions/core');
 const config = require('./config');
@@ -7,7 +15,7 @@ const config = require('./config');
 function buildUserDataScript(githubRegistrationToken, label) {
   let scriptContent;
   const cmd = `./config.sh --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --unattended ${config.input.disableEphemeralRunner ? '' : '--ephemeral'}`;
-  
+
   if (config.input.runnerHomeDir) {
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
@@ -35,11 +43,11 @@ function buildUserDataScript(githubRegistrationToken, label) {
       cmd
     ];
   }
-  
+
   if (config.input.runAsUser) {
     scriptContent.push(`chown -R ${config.input.runAsUser} .`);
   }
-  
+
   if (config.input.runAsService) {
     scriptContent.push(`./svc.sh install ${config.input.runAsUser || ''}`);
     scriptContent.push('./svc.sh start');
@@ -49,7 +57,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 
   // Create MIME multipart format
   const boundary = '//';
-  
+
   const mimeData = [
     'Content-Type: multipart/mixed; boundary="' + boundary + '"',
     'MIME-Version: 1.0',
@@ -83,6 +91,10 @@ function buildMarketOptions() {
 }
 
 async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
+  // If multiple instance types are provided, use EC2 Fleet (instant) to try them
+  if (Array.isArray(config.input.ec2InstanceTypes) && config.input.ec2InstanceTypes.length > 0) {
+    return await createEc2InstanceWithFleetParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region);
+  }
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
@@ -210,6 +222,105 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
   } catch (error) {
     core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
     throw error;
+  }
+}
+
+async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
+  const ec2 = new EC2Client({ region });
+
+  const userData = buildUserDataScript(githubRegistrationToken, label);
+  core.info('Executing user data script (fleet): ' + userData.replace(githubRegistrationToken, '<redacted>'));
+
+  const launchTemplateName = `gh-runner-${label}-${Date.now()}`;
+
+  const ltData = {
+    ImageId: imageId,
+    SecurityGroupIds: [securityGroupId],
+    UserData: Buffer.from(userData).toString('base64'),
+    IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
+    TagSpecifications: config.tagSpecifications || undefined
+  };
+
+  // // Block device mappings support
+  // if (config.input.blockDeviceMappings.length > 0) {
+  //   ltData.BlockDeviceMappings = config.input.blockDeviceMappings;
+  // } else if (config.input.ec2VolumeSize !== '' || config.input.ec2VolumeType !== '') {
+  //   ltData.BlockDeviceMappings = [
+  //     {
+  //       DeviceName: config.input.ec2DeviceName,
+  //       Ebs: {
+  //         ...(config.input.ec2VolumeSize !== '' && { VolumeSize: config.input.ec2VolumeSize }),
+  //         ...(config.input.ec2VolumeType !== '' && { VolumeType: config.input.ec2VolumeType })
+  //       }
+  //     }
+  //   ];
+  // }
+
+  let launchTemplateId;
+  try {
+    const createLtRes = await ec2.send(new CreateLaunchTemplateCommand({
+      LaunchTemplateName: launchTemplateName,
+      LaunchTemplateData: ltData,
+      TagSpecifications: config.tagSpecifications || undefined
+    }));
+    launchTemplateId = createLtRes.LaunchTemplate?.LaunchTemplateId;
+    if (!launchTemplateId) {
+      throw new Error('Failed to create launch template: missing LaunchTemplateId in response');
+    }
+
+    const overrides = (config.input.ec2InstanceTypes || []).map((type) => ({
+      InstanceType: type,
+      SubnetId: subnetId
+    }));
+
+    const isSpot = config.input.marketType === 'spot';
+
+    const fleetParams = {
+      Type: 'instant',
+      LaunchTemplateConfigs: [
+        {
+          LaunchTemplateSpecification: {
+            LaunchTemplateId: launchTemplateId
+          },
+          Overrides: overrides
+        }
+      ],
+      TargetCapacitySpecification: {
+        TotalTargetCapacity: 1,
+        DefaultTargetCapacityType: isSpot ? 'spot' : 'on-demand'
+      },
+      SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined,
+      OnDemandOptions: isSpot ? undefined : {}
+    };
+
+    const fleetRes = await ec2.send(new CreateFleetCommand(fleetParams));
+
+    // Try to extract instance ID from the response (Type='instant' should return Instances)
+    let ec2InstanceId;
+    if (Array.isArray(fleetRes.Instances)) {
+      for (const group of fleetRes.Instances) {
+        if (Array.isArray(group.InstanceIds) && group.InstanceIds.length > 0) {
+          ec2InstanceId = group.InstanceIds[0];
+          break;
+        }
+      }
+    }
+
+    if (!ec2InstanceId) {
+      const errDetails = JSON.stringify({ Errors: fleetRes.Errors }, null, 2);
+      throw new Error(`EC2 Fleet did not return an instance ID. Details: ${errDetails}`);
+    }
+
+    core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} via EC2 Fleet in region ${region}`);
+    return ec2InstanceId;
+  } finally {
+    if (launchTemplateId) {
+      try {
+        await ec2.send(new DeleteLaunchTemplateCommand({ LaunchTemplateId: launchTemplateId }));
+      } catch (e) {
+        core.warning(`Failed to delete temporary launch template ${launchTemplateName}: ${e.message}`);
+      }
+    }
   }
 }
 
