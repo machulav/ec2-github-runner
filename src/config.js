@@ -11,6 +11,7 @@ class Config {
       launchTemplateId: core.getInput('launch-template-id'),
       githubToken: core.getInput('github-token'),
       iamRoleName: core.getInput('iam-role-name'),
+      iamRoleArns: core.getInput('iam-role-arns'),
       label: core.getInput('label'),
       marketType: core.getInput('market-type'),
       mode: core.getInput('mode'),
