@@ -42,6 +42,13 @@ inputs:
       EC2 Fleet across these instance types and will select whichever can be fulfilled first. When provided,
       'ec2-instance-type' becomes optional.
     required: false
+  launch-template-id:
+    description: >-
+      Optional existing EC2 Launch Template ID to use with EC2 Fleet. When provided, the action will not create a
+      temporary launch template. Ensure the template contains all required settings (AMI, security groups, IAM role,
+      user data, block devices, etc.). Note: when providing a fixed launch template, the action will not inject
+      dynamic user data (e.g., GitHub registration token) — your template must handle runner registration.
+    required: false
   subnet-id:
     description: >-
       VPC Subnet Id. The subnet should belong to the same VPC as the specified security group.

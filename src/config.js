@@ -8,6 +8,7 @@ class Config {
       ec2InstanceId: core.getInput('ec2-instance-id'),
       ec2InstanceType: core.getInput('ec2-instance-type'),
       ec2InstanceTypes: JSON.parse(core.getInput('ec2-instance-types') || '[]'),
+      launchTemplateId: core.getInput('launch-template-id'),
       githubToken: core.getInput('github-token'),
       iamRoleName: core.getInput('iam-role-name'),
       label: core.getInput('label'),

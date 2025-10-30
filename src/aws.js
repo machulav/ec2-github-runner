@@ -3,8 +3,6 @@ const {
   RunInstancesCommand,
   TerminateInstancesCommand,
   waitUntilInstanceRunning,
-  CreateLaunchTemplateCommand,
-  DeleteLaunchTemplateCommand,
   CreateFleetCommand
 } = require('@aws-sdk/client-ec2');
 
@@ -228,100 +226,54 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
 async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
   const ec2 = new EC2Client({ region });
 
-  const userData = buildUserDataScript(githubRegistrationToken, label);
-  core.info('Executing user data script (fleet): ' + userData.replace(githubRegistrationToken, '<redacted>'));
+  const overrides = (config.input.ec2InstanceTypes || []).map((type) => ({
+    InstanceType: type,
+    SubnetId: subnetId,
+    // For Type='instant', allow AMI override so callers can pass ImageId without baking it into LT
+    ...(imageId ? { ImageId: imageId } : {})
+  }));
 
-  const launchTemplateName = `gh-runner-${label}-${Date.now()}`;
+  const isSpot = config.input.marketType === 'spot';
 
-  const ltData = {
-    ImageId: imageId,
-    SecurityGroupIds: [securityGroupId],
-    UserData: Buffer.from(userData).toString('base64'),
-    IamInstanceProfile: config.input.iamRoleName ? { Name: config.input.iamRoleName } : undefined,
-    TagSpecifications: config.tagSpecifications || undefined
+  const fleetParams = {
+    Type: 'instant',
+    LaunchTemplateConfigs: [
+      {
+        LaunchTemplateSpecification: {
+          LaunchTemplateId: config.input.launchTemplateId
+        },
+        Overrides: overrides
+      }
+    ],
+    TargetCapacitySpecification: {
+      TotalTargetCapacity: 1,
+      DefaultTargetCapacityType: isSpot ? 'spot' : 'on-demand',
+      SpotTargetCapacity: isSpot ? 1 : 0,
+      OnDemandTargetCapacity: isSpot ? 0 : 1
+    },
+    SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined,
   };
 
-  // // Block device mappings support
-  // if (config.input.blockDeviceMappings.length > 0) {
-  //   ltData.BlockDeviceMappings = config.input.blockDeviceMappings;
-  // } else if (config.input.ec2VolumeSize !== '' || config.input.ec2VolumeType !== '') {
-  //   ltData.BlockDeviceMappings = [
-  //     {
-  //       DeviceName: config.input.ec2DeviceName,
-  //       Ebs: {
-  //         ...(config.input.ec2VolumeSize !== '' && { VolumeSize: config.input.ec2VolumeSize }),
-  //         ...(config.input.ec2VolumeType !== '' && { VolumeType: config.input.ec2VolumeType })
-  //       }
-  //     }
-  //   ];
-  // }
+  const fleetRes = await ec2.send(new CreateFleetCommand(fleetParams));
 
-  let launchTemplateId;
-  try {
-    const createLtRes = await ec2.send(new CreateLaunchTemplateCommand({
-      LaunchTemplateName: launchTemplateName,
-      LaunchTemplateData: ltData,
-      TagSpecifications: config.tagSpecifications || undefined
-    }));
-    launchTemplateId = createLtRes.LaunchTemplate?.LaunchTemplateId;
-    if (!launchTemplateId) {
-      throw new Error('Failed to create launch template: missing LaunchTemplateId in response');
-    }
-
-    const overrides = (config.input.ec2InstanceTypes || []).map((type) => ({
-      InstanceType: type,
-      SubnetId: subnetId
-    }));
-
-    const isSpot = config.input.marketType === 'spot';
-
-    const fleetParams = {
-      Type: 'instant',
-      LaunchTemplateConfigs: [
-        {
-          LaunchTemplateSpecification: {
-            LaunchTemplateId: launchTemplateId
-          },
-          Overrides: overrides
-        }
-      ],
-      TargetCapacitySpecification: {
-        TotalTargetCapacity: 1,
-        DefaultTargetCapacityType: isSpot ? 'spot' : 'on-demand'
-      },
-      SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined,
-      OnDemandOptions: isSpot ? undefined : {}
-    };
-
-    const fleetRes = await ec2.send(new CreateFleetCommand(fleetParams));
-
-    // Try to extract instance ID from the response (Type='instant' should return Instances)
-    let ec2InstanceId;
-    if (Array.isArray(fleetRes.Instances)) {
-      for (const group of fleetRes.Instances) {
-        if (Array.isArray(group.InstanceIds) && group.InstanceIds.length > 0) {
-          ec2InstanceId = group.InstanceIds[0];
-          break;
-        }
-      }
-    }
-
-    if (!ec2InstanceId) {
-      const errDetails = JSON.stringify({ Errors: fleetRes.Errors }, null, 2);
-      throw new Error(`EC2 Fleet did not return an instance ID. Details: ${errDetails}`);
-    }
-
-    core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} via EC2 Fleet in region ${region}`);
-    return ec2InstanceId;
-  } finally {
-    if (launchTemplateId) {
-      try {
-        await ec2.send(new DeleteLaunchTemplateCommand({ LaunchTemplateId: launchTemplateId }));
-      } catch (e) {
-        core.warning(`Failed to delete temporary launch template ${launchTemplateName}: ${e.message}`);
+  // Try to extract instance ID from the response (Type='instant' should return Instances)
+  let ec2InstanceId;
+  if (Array.isArray(fleetRes.Instances)) {
+    for (const group of fleetRes.Instances) {
+      if (Array.isArray(group.InstanceIds) && group.InstanceIds.length > 0) {
+        ec2InstanceId = group.InstanceIds[0];
+        break;
       }
     }
   }
+
+  if (!ec2InstanceId) {
+    const errDetails = JSON.stringify({ Errors: fleetRes.Errors }, null, 2);
+    throw new Error(`EC2 Fleet did not return an instance ID. Details: ${errDetails}`);
+  }
+
+  core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} via EC2 Fleet in region ${region}`);
+  return ec2InstanceId;
 }
 
 module.exports = {
