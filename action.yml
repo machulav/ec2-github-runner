@@ -78,11 +78,6 @@ inputs:
       IAM Role Name to attach to the created EC2 instance.
       This requires additional permissions on the AWS role used to launch instances.
     required: false
-  iam-role-arns:
-    description: >-
-      IAM Role arn to attach to the created EC2 instance.
-      This requires additional permissions on the AWS role used to launch instances.
-    required: false
   aws-resource-tags:
     description: >-
       Tags to attach to the launched EC2 instance and volume.
