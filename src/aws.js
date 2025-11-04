@@ -91,10 +91,12 @@ function buildMarketOptions() {
 }
 
 async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
-  // If multiple instance types are provided, use EC2 Fleet (instant) to try them
+  // If multiple instance types are provided, use EC2 Fleet (instant) to create an instance
   if (Array.isArray(config.input.ec2InstanceTypes) && config.input.ec2InstanceTypes.length > 0) {
     return await createEc2InstanceWithFleetParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region);
   }
+
+  // else, use RunInstances to create instance with fixed instance type
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
@@ -249,7 +251,6 @@ async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroup
     const ltData = {
       SecurityGroupIds: [securityGroupId],
       UserData: Buffer.from(userData).toString('base64'),
-      IamInstanceProfile: config.input.iamRoleArns ? { Name: config.input.iamRoleName } : undefined,
       TagSpecifications: config.tagSpecifications
     };
 
@@ -278,7 +279,7 @@ async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroup
     const createLtRes = await ec2.send(new CreateLaunchTemplateCommand(createLtParams));
     launchTemplateId = createLtRes.LaunchTemplate.LaunchTemplateId;
     createdTemporaryLt = true;
-    core.info(`Created temporary Launch Template ${launchTemplateId}`);
+    core.info(`Created temporary Launch Template ${launchTemplateId} with name ${ltName}`);
   }
 
   const isSpot = config.input.marketType === 'spot';
@@ -300,41 +301,42 @@ async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroup
       SpotTargetCapacity: isSpot ? 1 : 0,
       OnDemandTargetCapacity: isSpot ? 0 : 1
     },
-    SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined,
+    SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined
   };
 
   let ec2InstanceId;
-  let fleetRes;
-  try {
-    fleetRes = await ec2.send(new CreateFleetCommand(fleetParams));
+  let ec2InstanceType;
+  const fleetRes = await ec2.send(new CreateFleetCommand(fleetParams));
 
-    // Try to extract instance ID from the response (Type='instant' should return Instances)
-    if (Array.isArray(fleetRes.Instances)) {
-      for (const group of fleetRes.Instances) {
-        if (Array.isArray(group.InstanceIds) && group.InstanceIds.length > 0) {
-          ec2InstanceId = group.InstanceIds[0];
-          break;
-        }
-      }
-    }
-
-    if (!ec2InstanceId) {
-      const errDetails = JSON.stringify({ Errors: fleetRes.Errors }, null, 2);
-      throw new Error(`EC2 Fleet did not return an instance ID. Details: ${errDetails}`);
-    }
-
-    core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} via EC2 Fleet in region ${region}`);
-    return ec2InstanceId;
-  } finally {
-    if (createdTemporaryLt && launchTemplateId) {
-      try {
-        await ec2.send(new DeleteLaunchTemplateCommand({ LaunchTemplateId: launchTemplateId }));
-        core.info(`Deleted temporary Launch Template ${launchTemplateId}`);
-      } catch (e) {
-        core.warning(`Failed to delete temporary Launch Template ${launchTemplateId}: ${e.message}`);
+  // Try to extract instance ID from the response (Type='instant' should return Instances)
+  if (Array.isArray(fleetRes.Instances)) {
+    core.info(`EC2 Fleet returned ${fleetRes.Instances.length} instances`);
+    for (const group of fleetRes.Instances) {
+      if (Array.isArray(group.InstanceIds) && group.InstanceIds.length > 0) {
+        ec2InstanceId = group.InstanceIds[0];
+        ec2InstanceType = group.InstanceType;
+        break;
       }
     }
   }
+
+  if (!ec2InstanceId) {
+    const errDetails = JSON.stringify({ Errors: fleetRes.Errors }, null, 2);
+    throw new Error(`EC2 Fleet did not return an instance ID. Details: ${errDetails}`);
+  }
+
+  core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} with type ${ec2InstanceType} via EC2 Fleet in region ${region}`);
+
+  // clean up the temporary launch template if it was created
+  if (createdTemporaryLt && launchTemplateId) {
+    try {
+      await ec2.send(new DeleteLaunchTemplateCommand({ LaunchTemplateId: launchTemplateId }));
+      core.info(`Deleted temporary Launch Template ${launchTemplateId}`);
+    } catch (e) {
+      core.warning(`Failed to delete temporary Launch Template ${launchTemplateId}: ${e.message}`);
+    }
+  }
+  return ec2InstanceId;
 }
 
 module.exports = {
