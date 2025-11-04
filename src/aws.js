@@ -288,7 +288,8 @@ async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroup
     LaunchTemplateConfigs: [
       {
         LaunchTemplateSpecification: {
-          LaunchTemplateId: launchTemplateId
+          LaunchTemplateId: launchTemplateId,
+          Version: '$Latest'
         },
         Overrides: overrides
       }
