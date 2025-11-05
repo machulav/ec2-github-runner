@@ -7,6 +7,8 @@ class Config {
       ec2ImageId: core.getInput('ec2-image-id'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
       ec2InstanceType: core.getInput('ec2-instance-type'),
+      ec2InstanceTypes: JSON.parse(core.getInput('ec2-instance-types') || '[]'),
+      launchTemplateId: core.getInput('launch-template-id'),
       githubToken: core.getInput('github-token'),
       iamRoleName: core.getInput('iam-role-name'),
       label: core.getInput('label'),
@@ -28,6 +30,7 @@ class Config {
       availabilityZonesConfig: core.getInput('availability-zones-config'),
       metadataOptions: JSON.parse(core.getInput('metadata-options') || '{}'),
       packages: JSON.parse(core.getInput('packages') || '[]'),
+      disableEphemeralRunner: core.getInput('disable-ephemeral-runner') === 'true',
     };
 
     // Get the AWS_REGION environment variable
@@ -96,9 +99,9 @@ class Config {
         }
       }
 
-      // Check for required instance type regardless of config method
-      if (!this.input.ec2InstanceType) {
-        throw new Error(`The 'ec2-instance-type' input is required for the 'start' mode.`);
+      // Check for required instance type(s)
+      if (!this.input.ec2InstanceType && (!Array.isArray(this.input.ec2InstanceTypes) || this.input.ec2InstanceTypes.length === 0)) {
+        throw new Error(`The 'ec2-instance-type' input is required for the 'start' mode unless 'ec2-instance-types' is provided.`);
       }
 
       // If no availability zones config provided, check for individual parameters

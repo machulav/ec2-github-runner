@@ -1,4 +1,4 @@
-name: On-demand self-hosted AWS EC2 runner for GitHub Actions
+name: On-demand self-hosted AWS EC2 runner for GitHub Actions (with unattended mode)
 description: GitHub Action for automatic creation and registration AWS EC2 instance as a GitHub Actions self-hosted runner.
 author: Volodymyr Machula
 branding:
@@ -33,7 +33,21 @@ inputs:
   ec2-instance-type:
     description: >-
       EC2 Instance Type.
-      This input is required if you use the 'start' mode.
+      This input is required if you use the 'start' mode unless 'ec2-instance-types' is provided.
+    required: false
+  ec2-instance-types:
+    description: >-
+      JSON array of EC2 instance types to try when creating the runner (uses EC2 Fleet with Type='instant').
+      Example: '["c6i.large", "m6i.large", "t3.large"]'. If provided, this action will attempt to launch using
+      EC2 Fleet across these instance types and will select whichever can be fulfilled first. When provided,
+      'ec2-instance-type' becomes optional.
+    required: false
+  launch-template-id:
+    description: >-
+      Optional existing EC2 Launch Template ID to use with EC2 Fleet. When provided, the action will not create a
+      temporary launch template. Ensure the template contains all required settings (AMI, security groups, IAM role,
+      user data, block devices, etc.). Note: when providing a fixed launch template, the action will not inject
+      dynamic user data (e.g., GitHub registration token) — your template must handle runner registration.
     required: false
   subnet-id:
     description: >-
