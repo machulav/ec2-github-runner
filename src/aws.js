@@ -302,7 +302,7 @@ async function createEc2InstanceWithFleetParams(imageId, subnetId, securityGroup
       SpotTargetCapacity: isSpot ? 1 : 0,
       OnDemandTargetCapacity: isSpot ? 0 : 1
     },
-    SpotOptions: isSpot ? { AllocationStrategy: 'capacity-optimized' } : undefined
+    SpotOptions: isSpot ? { AllocationStrategy: 'price-capacity-optimized' } : undefined
   };
 
   let ec2InstanceId;
