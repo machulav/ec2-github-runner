@@ -25,8 +25,8 @@ async function start() {
 }
 
 async function stop() {
-  await aws.terminateEc2Instance();
   await gh.removeRunner();
+  await aws.terminateEc2Instance();
 }
 
 (async function () {
