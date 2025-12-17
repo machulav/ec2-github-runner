@@ -52,31 +52,34 @@ async function removeRunner() {
 }
 
 async function waitForRunnerRegistered(label) {
-  const timeoutMinutes = 5;
-  const retryIntervalSeconds = 10;
-  const quietPeriodSeconds = 30;
-  let waitSeconds = 0;
+  const timeoutMinutes = parseInt(config.input.startupTimeoutMinutes) || 5;
+  const retryIntervalSeconds = parseInt(config.input.startupRetryIntervalSeconds) || 10;
+  const quietPeriodSeconds = parseInt(config.input.startupQuietPeriodSeconds) || 30;
 
   core.info(`Waiting ${quietPeriodSeconds}s for the AWS EC2 instance to be registered in GitHub as a new self-hosted runner`);
-  await new Promise(r => setTimeout(r, quietPeriodSeconds * 1000));
+  await new Promise((r) => setTimeout(r, quietPeriodSeconds * 1000));
   core.info(`Checking every ${retryIntervalSeconds}s if the GitHub self-hosted runner is registered`);
+  core.info(`The maximum waiting time is ${timeoutMinutes} minutes`);
+
+  const startTime = Date.now();
+  const timeoutMs = timeoutMinutes * 60 * 1000;
 
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
+      const elapsedMs = Date.now() - startTime;
       const runner = await getRunner(label);
-
-      if (waitSeconds > timeoutMinutes * 60) {
-        core.error('GitHub self-hosted runner registration error');
-        clearInterval(interval);
-        reject(`A timeout of ${timeoutMinutes} minutes is exceeded. Your AWS EC2 instance was not able to register itself in GitHub as a new self-hosted runner.`);
-      }
 
       if (runner && runner.status === 'online') {
         core.info(`GitHub self-hosted runner ${runner.name} is registered and ready to use`);
         clearInterval(interval);
         resolve();
+      } else if (elapsedMs >= timeoutMs) {
+        core.error('GitHub self-hosted runner registration error');
+        clearInterval(interval);
+        reject(
+          `A timeout of ${timeoutMinutes} minutes is exceeded. Your AWS EC2 instance was not able to register itself in GitHub as a new self-hosted runner.`,
+        );
       } else {
-        waitSeconds += retryIntervalSeconds;
         core.info('Checking...');
       }
     }, retryIntervalSeconds * 1000);
