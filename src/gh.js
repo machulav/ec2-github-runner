@@ -31,6 +31,13 @@ async function getRegistrationToken() {
   }
 }
 
+function isRetryableError(error) {
+  if (!error.status) return false;
+  
+  // Retry on server errors and rate limits
+  return error.status >= 500 || error.status === 429;
+}
+
 async function removeRunner() {
   const runner = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
@@ -41,13 +48,33 @@ async function removeRunner() {
     return;
   }
 
-  try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
-    core.info(`GitHub self-hosted runner ${runner.name} is removed`);
-    return;
-  } catch (error) {
-    core.error('GitHub self-hosted runner removal error');
-    throw error;
+  const maxRetries = 3;
+  const baseDelayMs = 1000;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+      core.info(`GitHub self-hosted runner ${runner.name} is removed`);
+      return;
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries;
+      
+      // If runner not found, consider it success (already removed)
+      if (error.status === 404) {
+        core.info(`GitHub self-hosted runner ${runner.name} was already removed`);
+        return;
+      }
+
+      if (!isRetryableError(error) || isLastAttempt) {
+        core.error(`GitHub self-hosted runner removal error after ${attempt} attempts (HTTP ${error.status}): ${error.message || error}`);
+        throw error;
+      }
+
+      // Exponential backoff with jitter
+      const delayMs = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+      core.info(`GitHub runner removal attempt ${attempt} failed (${error.status}), retrying in ${Math.round(delayMs)}ms...`);
+      await new Promise(r => setTimeout(r, delayMs));
+    }
   }
 }
 
