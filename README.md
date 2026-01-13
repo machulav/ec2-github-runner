@@ -217,7 +217,7 @@ Now you're ready to go!
 | `runner-home-dir`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies a directory where pre-installed actions-runner software and scripts are located.<br><br> |
 | `pre-runner-script`                                                                                                                                                              | Optional. Used only with the `start` mode. | Specifies bash commands to run before the runner starts.  It's useful for installing dependencies with apt-get, yum, dnf, etc. For example:<pre>          - name: Start EC2 runner<br>            with:<br>              mode: start<br>              ...<br>              pre-runner-script: \|<br>                 sudo yum update -y && \ <br>                 sudo yum install docker git libicu -y<br>                 sudo systemctl enable docker</pre> |
 | `market-type` | Optional. Used only with the `start` mode. | This field accepts only the value `spot`. <br><br> If set to `spot`, the runner will be launched as a Spot instance. <br><br> If omitted, the runner will be launched as an on-demand instance. |
-| `block-device-mappings` | Optional. Used only with the `start` mode. | JSON string specifying the block device mappings for the EC2 instance. For example: <br> <pre>[{"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3"}}]</pre> See <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html">AWS BlockDeviceMapping docs</a> for all options. |
+| `block-device-mappings` | Optional. Used only with the `start` mode. | JSON string specifying the block device mappings for the EC2 instance. For example: <br> <pre>[{"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3"}}]</pre> See <a href="https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html">AWS BlockDeviceMapping docs</a> for all options. <br><br> **Note on EBS Volume Deletion**: All EBS volumes are automatically configured with `DeleteOnTermination: true` to prevent orphaned volumes and unexpected costs. The action will add this property to any volume that doesn't explicitly set it. If you explicitly set `DeleteOnTermination: false`, that setting will be respected. |
 | `startup-quiet-period-seconds` | Optional | Default: 30 |
 | `startup-retry-interval-seconds` | Optional | Default: 10 |
 | `startup-timeout-minutes` | Optional | Default: 5 |
@@ -286,6 +286,8 @@ jobs:
             [
               {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3"}}
             ]
+          # Note: To preserve a volume after instance termination, explicitly set DeleteOnTermination: false:
+          #     {"DeviceName": "/dev/sdb", "Ebs": {"VolumeSize": 50, "DeleteOnTermination": false}}
   do-the-job:
     name: Do the job on the runner
     needs: start-runner # required to start the main job when the runner is ready
