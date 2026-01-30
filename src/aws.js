@@ -107,6 +107,38 @@ function buildMarketOptions() {
   };
 }
 
+/**
+ * Ensures all block device mappings have DeleteOnTermination set to true.
+ * Respects explicit user settings if DeleteOnTermination is already defined.
+ *
+ * @param {Array} blockDeviceMappings - Array of BlockDeviceMapping objects
+ * @returns {Array} Modified array with DeleteOnTermination set appropriately
+ */
+function ensureDeleteOnTermination(blockDeviceMappings) {
+  if (!Array.isArray(blockDeviceMappings) || blockDeviceMappings.length === 0) {
+    return blockDeviceMappings;
+  }
+
+  return blockDeviceMappings.map(mapping => {
+    // Create a shallow copy to avoid mutating the original
+    const modifiedMapping = { ...mapping };
+
+    // Only process if the mapping has an Ebs configuration
+    if (modifiedMapping.Ebs) {
+      // Create a shallow copy of the Ebs object
+      modifiedMapping.Ebs = { ...modifiedMapping.Ebs };
+
+      // Only set DeleteOnTermination if it's not already explicitly defined
+      // This respects user's explicit choice if they set it to false
+      if (modifiedMapping.Ebs.DeleteOnTermination === undefined) {
+        modifiedMapping.Ebs.DeleteOnTermination = true;
+      }
+    }
+
+    return modifiedMapping;
+  });
+}
+
 async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
@@ -135,13 +167,14 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
         Ebs: {
           ...(config.input.ec2VolumeSize !== '' && { VolumeSize: config.input.ec2VolumeSize }),
           ...(config.input.ec2VolumeType !== '' && { VolumeType: config.input.ec2VolumeType }),
+          DeleteOnTermination: true,
         },
       },
     ];
   }
 
   if (config.input.blockDeviceMappings.length > 0) {
-    params.BlockDeviceMappings = config.input.blockDeviceMappings;
+    params.BlockDeviceMappings = ensureDeleteOnTermination(config.input.blockDeviceMappings);
   }
 
   const result = await ec2.send(new RunInstancesCommand(params));
