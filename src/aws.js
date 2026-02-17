@@ -293,8 +293,30 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
   }
 }
 
+/**
+ * Fetches the serial console output from an EC2 instance.
+ * This captures boot logs, kernel messages, and user-data script output
+ * (anything written to /dev/console).
+ */
+async function getInstanceConsoleOutput(ec2InstanceId, region) {
+  const ec2 = new EC2Client({ region });
+  try {
+    const result = await ec2.send(new GetConsoleOutputCommand({
+      InstanceId: ec2InstanceId,
+    }));
+    if (result.Output) {
+      return Buffer.from(result.Output, 'base64').toString('utf-8');
+    }
+    return null;
+  } catch (error) {
+    core.warning(`Failed to fetch console output for ${ec2InstanceId}: ${error.message}`);
+    return null;
+  }
+}
+
 module.exports = {
   startEc2Instance,
   terminateEc2Instance,
   waitForInstanceRunning,
+  getInstanceConsoleOutput,
 };
