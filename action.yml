@@ -135,6 +135,13 @@ inputs:
       Example: '["git", "docker.io", "nodejs"]'
     required: false
     default: '[]'
+  runner-debug:
+    description: >-
+      Enable verbose debug logging for the runner setup.
+      When true, outputs detailed instance info, console output polling,
+      and step-by-step script execution logs.
+    required: false
+    default: 'false'
 outputs:
   label:
     description: >-

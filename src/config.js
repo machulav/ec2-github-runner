@@ -28,6 +28,7 @@ class Config {
       availabilityZonesConfig: core.getInput('availability-zones-config'),
       metadataOptions: JSON.parse(core.getInput('metadata-options') || '{}'),
       packages: JSON.parse(core.getInput('packages') || '[]'),
+      runnerDebug: core.getInput('runner-debug') === 'true',
     };
 
     // Get the AWS_REGION environment variable
