@@ -70,7 +70,7 @@ function buildRunCommands(githubRegistrationToken, label) {
   }
   if (config.input.runAsUser) {
     userData.push(`echo "[RUNNER] Changing ownership to user: ${config.input.runAsUser}"`);
-    userData.push(`chown -R ${config.input.runAsUser} .`);
+    userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || echo "[RUNNER] WARNING: some files could not be chowned (non-fatal)"`);
   }
   if (config.input.runAsService) {
     core.info('Runner will be started with service wrapper');
