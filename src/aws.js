@@ -1,49 +1,97 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, waitUntilInstanceRunning } = require('@aws-sdk/client-ec2');
+const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, GetConsoleOutputCommand, waitUntilInstanceRunning } = require('@aws-sdk/client-ec2');
 
 const core = require('@actions/core');
 const config = require('./config');
 
 // Build the commands to run on the instance
 function buildRunCommands(githubRegistrationToken, label) {
+  // Common preamble: fail-fast, log capture, and instance metadata
+  const preamble = [
+    '#!/bin/bash',
+    'set -e',
+    'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+    'echo "[RUNNER] =========================================="',
+    'echo "[RUNNER] Setup script started at $(date -u)"',
+    'echo "[RUNNER] =========================================="',
+    'echo "[RUNNER] Instance ID: $(curl -sf http://169.254.169.254/latest/meta-data/instance-id || echo unknown)"',
+    'echo "[RUNNER] Instance type: $(curl -sf http://169.254.169.254/latest/meta-data/instance-type || echo unknown)"',
+    'echo "[RUNNER] AMI ID: $(curl -sf http://169.254.169.254/latest/meta-data/ami-id || echo unknown)"',
+    'echo "[RUNNER] Hostname: $(hostname)"',
+    'echo "[RUNNER] Kernel: $(uname -r)"',
+    'echo "[RUNNER] Disk usage:" && df -h',
+    'echo "[RUNNER] Memory:" && free -h',
+  ];
+
   let userData;
   if (config.input.runnerHomeDir) {
-    core.info('Runner home directory is specified, so it is expected that the actions-runner software (and dependencies) are pre-installed in the AMI. The runner will be started by simply cd into the runner home directory and executing config.sh with appropriate parameters.');
-    // If runner home directory is specified, we expect the actions-runner software (and dependencies)
-    // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
-    userData =  [
-      '#!/bin/bash',
-      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+    core.info('Runner home directory is specified, so it is expected that the actions-runner software (and dependencies) are pre-installed in the AMI.');
+    userData = [
+      ...preamble,
+      `echo "[RUNNER] Changing to runner home dir: ${config.input.runnerHomeDir}"`,
       `cd "${config.input.runnerHomeDir}"`,
+      'echo "[RUNNER] Directory contents:" && ls -la',
+      'echo "[RUNNER] Sourcing pre-runner script..."',
       'source /tmp/pre-runner-script.sh',
+      'echo "[RUNNER] Pre-runner script completed"',
       'export RUNNER_ALLOW_RUNASROOT=1',
+      `echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`,
+      `echo "[RUNNER] Target repo: ${config.githubContext.owner}/${config.githubContext.repo}"`,
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
+      'echo "[RUNNER] config.sh completed successfully"',
     ];
   } else {
-    core.info('Runner home directory is not specified, so the latest actions-runner software will be downloaded and installed on the instance, and then the runner will be started');
+    core.info('Runner home directory is not specified, so the latest actions-runner software will be downloaded and installed.');
     userData = [
-      '#!/bin/bash',
-      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+      ...preamble,
+      'echo "[RUNNER] Creating actions-runner directory"',
       'mkdir actions-runner && cd actions-runner',
+      'echo "[RUNNER] Working directory: $(pwd)"',
+      'echo "[RUNNER] Sourcing pre-runner script..."',
       'source /tmp/pre-runner-script.sh',
+      'echo "[RUNNER] Pre-runner script completed"',
+      'echo "[RUNNER] Detecting architecture..."',
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+      'echo "[RUNNER] Architecture: ${RUNNER_ARCH}"',
+      'echo "[RUNNER] Fetching latest runner version from GitHub API..."',
       `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/' | tr -d "v")`,
+      'echo "[RUNNER] Runner version: v${RUNNER_VERSION}"',
+      'echo "[RUNNER] Downloading runner tarball..."',
       'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'echo "[RUNNER] Download complete. Extracting..."',
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'echo "[RUNNER] Extraction complete. Directory contents:" && ls -la',
       'export RUNNER_ALLOW_RUNASROOT=1',
+      `echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`,
+      `echo "[RUNNER] Target repo: ${config.githubContext.owner}/${config.githubContext.repo}"`,
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
+      'echo "[RUNNER] config.sh completed successfully"',
     ];
   }
   if (config.input.runAsUser) {
+    userData.push(`echo "[RUNNER] Changing ownership to user: ${config.input.runAsUser}"`);
     userData.push(`chown -R ${config.input.runAsUser} .`);
   }
   if (config.input.runAsService) {
-    core.info('Runner will be started with service wrapper, so it will automatically restart if the runner process crashes');
+    core.info('Runner will be started with service wrapper');
+    userData.push('echo "[RUNNER] Installing runner as service..."');
     userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
+    userData.push('echo "[RUNNER] Starting service..."');
     userData.push('./svc.sh start');
+    userData.push('echo "[RUNNER] Service started. Checking status..."');
+    userData.push('./svc.sh status || echo "[RUNNER] WARNING: svc.sh status returned non-zero"');
   } else {
-    core.info('Runner will be started without service wrapper, so it will run as long as the instance is running');
-    userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
+    core.info('Runner will be started without service wrapper');
+    userData.push('echo "[RUNNER] Starting runner with run.sh..."');
+    if (config.input.runAsUser) {
+      userData.push(`su ${config.input.runAsUser} -c ./run.sh`);
+    } else {
+      userData.push('./run.sh');
+    }
+    userData.push('echo "[RUNNER] run.sh exited with code $?"');
   }
+  userData.push('echo "[RUNNER] =========================================="');
+  userData.push('echo "[RUNNER] Setup script finished at $(date -u)"');
+  userData.push('echo "[RUNNER] =========================================="');
   return userData;
 }
 
