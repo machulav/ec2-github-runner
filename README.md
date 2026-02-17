@@ -116,7 +116,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    If you plan to attach an IAM role to the EC2 runner with the `iam-role-name` parameter, you will need to allow additional permissions:
 
-   ```
+   ```json
    {
     "Version": "2012-10-17",
     "Statement": [
@@ -139,7 +139,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    If you use the `aws-resource-tags` parameter, you will also need to allow the permissions to create tags:
 
-   ```
+   ```json
    {
     "Version": "2012-10-17",
     "Statement": [
@@ -187,7 +187,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    For Amazon Linux 2023:
 
-   ```
+   ```shell
     sudo dnf update -y && \
     sudo dnf install docker git libicu -y && \
     sudo systemctl enable docker
@@ -195,7 +195,7 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
    For Amazon Linux 2:
 
-   ```
+   ```shell
     sudo yum update -y && \
     sudo yum install docker git libicu -y && \
     sudo systemctl enable docker
