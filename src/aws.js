@@ -8,8 +8,9 @@ function buildRunCommands(githubRegistrationToken, label) {
   // Common preamble: fail-fast, log capture, and instance metadata
   const preamble = [
     '#!/bin/bash',
+    'LOGFILE=/tmp/runner-setup.log',
+    'exec > >(tee -a "$LOGFILE") 2>&1',
     'set -e',
-    'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
     'echo "[RUNNER] =========================================="',
     'echo "[RUNNER] Setup script started at $(date -u)"',
     'echo "[RUNNER] =========================================="',
