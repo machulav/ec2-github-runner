@@ -31,6 +31,33 @@ async function getRegistrationToken() {
   }
 }
 
+// generate a JIT (Just-In-Time) runner configuration via the GitHub API
+async function getJitRunnerConfig(label) {
+  const octokit = github.getOctokit(config.input.githubToken);
+
+  try {
+    const response = await octokit.request(
+      'POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig',
+      {
+        ...config.githubContext,
+        name: `ec2-${label}`,
+        runner_group_id: config.input.runnerGroupId,
+        labels: [label],
+        work_folder: '_work',
+      }
+    );
+
+    core.info('GitHub JIT runner configuration is received');
+    return {
+      runnerId: response.data.runner.id,
+      encodedJitConfig: response.data.encoded_jit_config,
+    };
+  } catch (error) {
+    core.error('GitHub JIT runner configuration generation error');
+    throw error;
+  }
+}
+
 async function removeRunner() {
   const runner = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
@@ -88,6 +115,7 @@ async function waitForRunnerRegistered(label) {
 
 module.exports = {
   getRegistrationToken,
+  getJitRunnerConfig,
   removeRunner,
   waitForRunnerRegistered,
 };

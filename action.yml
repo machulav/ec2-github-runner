@@ -135,6 +135,21 @@ inputs:
       Example: '["git", "docker.io", "nodejs"]'
     required: false
     default: '[]'
+  use-jit:
+    description: >-
+      Enable JIT (Just-In-Time) runner configuration. Uses GitHub's
+      generate-jitconfig API instead of the traditional registration-token approach.
+      JIT runners are single-use and auto-deregister after completing one job.
+      Incompatible with 'run-runner-as-service: true'.
+    required: false
+    default: 'false'
+  runner-group-id:
+    description: >-
+      The ID of the runner group to register the JIT runner in.
+      Defaults to 1, which is the "Default" runner group for repository-level runners.
+      Only used when 'use-jit' is true.
+    required: false
+    default: '1'
 outputs:
   label:
     description: >-

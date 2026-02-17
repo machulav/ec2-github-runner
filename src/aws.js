@@ -43,9 +43,47 @@ function buildRunCommands(githubRegistrationToken, label) {
   return userData;
 }
 
+// Build the commands to run on the instance for JIT mode.
+// JIT runners skip config.sh entirely and pass the encoded config directly to run.sh.
+function buildJitRunCommands(encodedJitConfig) {
+  let userData;
+  if (config.input.runnerHomeDir) {
+    userData = [
+      '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+      `cd "${config.input.runnerHomeDir}"`,
+      'source /tmp/pre-runner-script.sh',
+      'export RUNNER_ALLOW_RUNASROOT=1',
+    ];
+  } else {
+    userData = [
+      '#!/bin/bash',
+      'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
+      'mkdir actions-runner && cd actions-runner',
+      'source /tmp/pre-runner-script.sh',
+      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+      `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/' | tr -d "v")`,
+      'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'export RUNNER_ALLOW_RUNASROOT=1',
+    ];
+  }
+
+  if (config.input.runAsUser) {
+    userData.push(`chown -R ${config.input.runAsUser} .`);
+    userData.push(`su ${config.input.runAsUser} -c "./run.sh --jitconfig ${encodedJitConfig}"`);
+  } else {
+    userData.push(`./run.sh --jitconfig ${encodedJitConfig}`);
+  }
+
+  return userData;
+}
+
 // Build cloud-init YAML user data
-function buildUserDataScript(githubRegistrationToken, label) {
-  const runCommands = buildRunCommands(githubRegistrationToken, label);
+function buildUserDataScript(githubRegistrationToken, label, encodedJitConfig) {
+  const runCommands = encodedJitConfig
+    ? buildJitRunCommands(encodedJitConfig)
+    : buildRunCommands(githubRegistrationToken, label);
   
   // Create a script file with all commands to avoid YAML escaping issues
   const scriptContent = runCommands.join('\n');
@@ -107,12 +145,12 @@ function buildMarketOptions() {
   };
 }
 
-async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
+async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region, encodedJitConfig) {
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
 
-  const userData = buildUserDataScript(githubRegistrationToken, label);
+  const userData = buildUserDataScript(githubRegistrationToken, label, encodedJitConfig);
 
   const params = {
     ImageId: imageId,
@@ -149,7 +187,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
   return ec2InstanceId;
 }
 
-async function startEc2Instance(label, githubRegistrationToken) {
+async function startEc2Instance(label, githubRegistrationToken, encodedJitConfig) {
   core.info(`Attempting to start EC2 instance using ${config.availabilityZones.length} availability zone configuration(s)`);
   
   const errors = [];
@@ -169,7 +207,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
         azConfig.securityGroupId,
         label,
         githubRegistrationToken,
-        region
+        region,
+        encodedJitConfig
       );
       
       core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1} in region ${region}`);
@@ -242,4 +281,6 @@ module.exports = {
   startEc2Instance,
   terminateEc2Instance,
   waitForInstanceRunning,
+  // Exposed for testing only
+  _buildUserDataScriptForTest: buildUserDataScript,
 };
