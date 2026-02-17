@@ -35,6 +35,9 @@ function buildRunCommands(githubRegistrationToken, label) {
       'source /tmp/pre-runner-script.sh',
       'echo "[RUNNER] Pre-runner script completed"',
       'export RUNNER_ALLOW_RUNASROOT=1',
+      // Remove stale runner config from AMI so config.sh doesn't refuse to run
+      'echo "[RUNNER] Removing any existing runner configuration..."',
+      'rm -f .runner .credentials .credentials_rsaparams',
       `echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`,
       `echo "[RUNNER] Target repo: ${config.githubContext.owner}/${config.githubContext.repo}"`,
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
