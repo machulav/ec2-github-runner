@@ -7,6 +7,7 @@ const config = require('./config');
 function buildRunCommands(githubRegistrationToken, label) {
   let userData;
   if (config.input.runnerHomeDir) {
+    core.info('Runner home directory is specified, so it is expected that the actions-runner software (and dependencies) are pre-installed in the AMI. The runner will be started by simply cd into the runner home directory and executing config.sh with appropriate parameters.');
     // If runner home directory is specified, we expect the actions-runner software (and dependencies)
     // to be pre-installed in the AMI, so we simply cd into that directory and then start the runner
     userData =  [
@@ -35,9 +36,11 @@ function buildRunCommands(githubRegistrationToken, label) {
     userData.push(`chown -R ${config.input.runAsUser} .`);
   }
   if (config.input.runAsService) {
+    core.info('Runner will be started with service wrapper, so it will automatically restart if the runner process crashes');
     userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
     userData.push('./svc.sh start');
   } else {
+    core.info('Runner will be started without service wrapper, so it will run as long as the instance is running');
     userData.push(`${config.input.runAsUser ? `su ${config.input.runAsUser} -c` : ''} ./run.sh`);
   }
   return userData;
@@ -46,13 +49,13 @@ function buildRunCommands(githubRegistrationToken, label) {
 // Build cloud-init YAML user data
 function buildUserDataScript(githubRegistrationToken, label) {
   const runCommands = buildRunCommands(githubRegistrationToken, label);
-  
+
   // Create a script file with all commands to avoid YAML escaping issues
   const scriptContent = runCommands.join('\n');
-  
+
   // Start with cloud-init header
   let yamlContent = '#cloud-config\n';
-  
+
   // Add packages if specified
   if (config.input.packages && config.input.packages.length > 0) {
     yamlContent += 'packages:\n';
@@ -60,15 +63,15 @@ function buildUserDataScript(githubRegistrationToken, label) {
       yamlContent += `  - ${pkg}\n`;
     });
   }
-  
+
   // Write files
   yamlContent += 'write_files:\n';
-  
+
   // Always write pre-runner script (even if empty) since runner-setup.sh always sources it
   yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
   yamlContent += '    permissions: "0755"\n';
   yamlContent += '    content: |\n';
-  
+
   if (config.input.preRunnerScript) {
     config.input.preRunnerScript.split('\n').forEach(line => {
       yamlContent += `      ${line}\n`;
@@ -76,21 +79,21 @@ function buildUserDataScript(githubRegistrationToken, label) {
   } else {
     yamlContent += '      #!/bin/bash\n';
   }
-  
+
   // Write main setup script
   yamlContent += '  - path: /tmp/runner-setup.sh\n';
   yamlContent += '    permissions: "0755"\n';
   yamlContent += '    content: |\n';
-  
+
   // Add each line of the script with proper indentation
   scriptContent.split('\n').forEach(line => {
     yamlContent += `      ${line}\n`;
   });
-  
+
   // Execute the script
   yamlContent += 'runcmd:\n';
   yamlContent += '  - /tmp/runner-setup.sh\n';
-  
+
   return yamlContent;
 }
 
@@ -151,9 +154,9 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
 
 async function startEc2Instance(label, githubRegistrationToken) {
   core.info(`Attempting to start EC2 instance using ${config.availabilityZones.length} availability zone configuration(s)`);
-  
+
   const errors = [];
-  
+
   // Try each availability zone configuration in sequence
   for (let i = 0; i < config.availabilityZones.length; i++) {
     const azConfig = config.availabilityZones[i];
@@ -161,7 +164,7 @@ async function startEc2Instance(label, githubRegistrationToken) {
     const region = azConfig.region;
     core.info(`Trying availability zone configuration ${i + 1}/${config.availabilityZones.length}`);
     core.info(`Using imageId: ${azConfig.imageId}, subnetId: ${azConfig.subnetId}, securityGroupId: ${azConfig.securityGroupId}, region: ${region}`);
-    
+
     try {
       const ec2InstanceId = await createEc2InstanceWithParams(
         azConfig.imageId,
@@ -171,19 +174,19 @@ async function startEc2Instance(label, githubRegistrationToken) {
         githubRegistrationToken,
         region
       );
-      
+
       core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1} in region ${region}`);
       return { ec2InstanceId, region };
     } catch (error) {
       const errorMessage = `Failed to start EC2 instance with configuration ${i + 1} in region ${region}: ${error.message}`;
       core.warning(errorMessage);
       errors.push(errorMessage);
-      
+
       // Continue to the next availability zone configuration
       continue;
     }
   }
-  
+
   // If we've tried all configurations and none worked, throw an error
   core.error('All availability zone configurations failed');
   throw new Error(`Failed to start EC2 instance in any availability zone. Errors: ${errors.join('; ')}`);
@@ -210,9 +213,9 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
   // Region is always provided now
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
-  
+
   core.info(`Using region ${region} for checking instance ${ec2InstanceId} status`);
-  
+
   try {
     core.info(`Checking for instance ${ec2InstanceId} to be up and running`);
     await waitUntilInstanceRunning(
