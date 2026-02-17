@@ -76,6 +76,14 @@ function buildRunCommands(githubRegistrationToken, label) {
   if (config.input.runAsUser) {
     userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || true`);
   }
+  // Wait for Docker to be ready before starting the runner.
+  // The setup script runs in the background (via nohup from the boothook), so by this
+  // point systemd has had time to start Docker. This gate prevents the runner from
+  // accepting jobs before Docker is responsive.
+  userData.push('echo "[RUNNER] Waiting for Docker to be ready..."');
+  userData.push('for i in $(seq 1 30); do docker version &>/dev/null && break; sleep 2; done');
+  userData.push('docker version &>/dev/null && echo "[RUNNER] Docker is ready" || echo "[RUNNER] WARNING: Docker not ready after 60s, continuing anyway"');
+
   if (config.input.runAsService) {
     core.info('Runner will be started with service wrapper');
     userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
@@ -137,6 +145,11 @@ function buildJitRunCommands(encodedJitConfig) {
     ];
   }
 
+  // Wait for Docker to be ready before starting the runner
+  userData.push('echo "[RUNNER] Waiting for Docker to be ready..."');
+  userData.push('for i in $(seq 1 30); do docker version &>/dev/null && break; sleep 2; done');
+  userData.push('docker version &>/dev/null && echo "[RUNNER] Docker is ready" || echo "[RUNNER] WARNING: Docker not ready after 60s, continuing anyway"');
+
   if (config.input.runAsUser) {
     userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || true`);
     userData.push(`runuser -u ${config.input.runAsUser} -- ./run.sh --jitconfig ${encodedJitConfig}`);
@@ -181,18 +194,6 @@ function buildUserDataScript(githubRegistrationToken, label, encodedJitConfig) {
     lines.push(`echo "[BOOTHOOK] Installing packages: ${pkgList}"`);
     lines.push(`yum install -y ${pkgList} || apt-get install -y ${pkgList} || echo "[BOOTHOOK] WARNING: package installation failed"`);
   }
-
-  // Wait for Docker to be fully ready before starting the runner.
-  // The boothook runs during cloud-init init stage, which is very early in boot.
-  // Docker may still be initializing at this point. Without this gate, the runner
-  // could accept jobs before Docker is responsive, causing `docker version` to hang.
-  lines.push('echo "[BOOTHOOK] Waiting for Docker to be ready..."');
-  lines.push('for i in $(seq 1 30); do');
-  lines.push('  docker version &>/dev/null && break');
-  lines.push('  sleep 2');
-  lines.push('done');
-  lines.push('docker version &>/dev/null && echo "[BOOTHOOK] Docker is ready" || echo "[BOOTHOOK] WARNING: Docker not ready after 60s, continuing anyway"');
-  lines.push('');
 
   // Write the setup script to /opt/ using heredoc (quoted delimiter = no variable expansion)
   lines.push("cat > /opt/runner-setup.sh << 'RUNNERSETUPEOF'");

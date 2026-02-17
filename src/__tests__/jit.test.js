@@ -242,15 +242,24 @@ describe('aws.js - user-data generation', () => {
     expect(userData).toContain('nohup /opt/runner-setup.sh &');
   });
 
-  test('user-data includes Docker readiness gate before setup script', () => {
+  test('user-data includes Docker readiness gate inside setup script', () => {
     const aws = loadFreshAws();
     const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
     expect(userData).toContain('Waiting for Docker to be ready');
     expect(userData).toContain('docker version &>/dev/null && break');
-    // Docker gate must appear before the setup script
+    // Docker gate must be inside the setup script heredoc, not in the boothook
+    const heredocStart = userData.indexOf('RUNNERSETUPEOF');
+    const heredocEnd = userData.indexOf('RUNNERSETUPEOF', heredocStart + 1);
     const dockerGateIdx = userData.indexOf('Waiting for Docker');
-    const setupScriptIdx = userData.indexOf('nohup /opt/runner-setup.sh');
-    expect(dockerGateIdx).toBeLessThan(setupScriptIdx);
+    expect(dockerGateIdx).toBeGreaterThan(heredocStart);
+    expect(dockerGateIdx).toBeLessThan(heredocEnd);
+  });
+
+  test('JIT user-data includes Docker readiness gate inside setup script', () => {
+    const aws = loadFreshAws({ 'use-jit': 'true' });
+    const userData = aws._buildUserDataScriptForTest(null, 'testlabel', 'encodedconfig123');
+    expect(userData).toContain('Waiting for Docker to be ready');
+    expect(userData).toContain('docker version &>/dev/null && break');
   });
 
   test('standard user-data removes stale runner config files', () => {
