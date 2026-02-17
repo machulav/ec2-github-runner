@@ -185,13 +185,19 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 1. Create a new EC2 instance based on any Linux distribution you need.
 2. Connect to the instance using SSH, install `docker` and `git`, then enable `docker` service.
 
-   For Amazon Linux 2, it looks like the following:
+   For Amazon Linux 2023:
+
+   ```
+    sudo dnf update -y && \
+    sudo dnf install docker git libicu -y && \
+    sudo systemctl enable docker
+   ```
+
+   For Amazon Linux 2:
 
    ```
     sudo yum update -y && \
-    sudo yum install docker -y && \
-    sudo yum install git -y && \
-    sudo yum install libicu -y && \
+    sudo yum install docker git libicu -y && \
     sudo systemctl enable docker
    ```
 
@@ -201,7 +207,11 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 4. Create a new EC2 image (AMI) from the instance.
 5. Remove the instance if not required anymore after the image is created.
 
-Alternatively, you can use a vanilla EC2 AMI and set up the dependencies via `pre-runner-script` in the workflow YAML file. See example in the `pre-runner-script` documentation below.
+> **Important:** If your AMI was created from an instance that previously ran a GitHub Actions runner, make sure to delete the stale runner configuration files (`.runner`, `.credentials`, `.credentials_rsaparams`) from the runner directory before creating the AMI. The action handles this automatically, but a clean AMI avoids unnecessary warnings.
+
+Alternatively, you can use a vanilla EC2 AMI and set up the dependencies via `pre-runner-script` or the `packages` input in the workflow YAML file.
+
+> **Compatibility note:** This action uses a `#cloud-boothook` user-data format to ensure the setup script runs during cloud-init's init stage. This is compatible with Amazon Linux 2, Amazon Linux 2023, Ubuntu, and other distributions that support cloud-init. The boothook approach avoids issues with some AMIs where `cloud_final_modules` (used by `runcmd`) may be empty or misconfigured.
 
 **4. Prepare VPC with subnet and security group**
 
@@ -342,6 +352,94 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+```
+
+### Advanced: JIT runners
+
+JIT (Just-In-Time) runners use GitHub's `generate-jitconfig` API to create single-use runners that automatically deregister after completing one job. This eliminates the need for `config.sh` and simplifies cleanup.
+
+JIT runners skip the traditional registration-token flow entirely. Instead, the encoded JIT config is passed directly to `./run.sh --jitconfig <config>`. The runner self-destructs after the job completes, so `stop` mode only terminates the EC2 instance (no GitHub runner removal needed).
+
+> **Note:** JIT mode is incompatible with `run-runner-as-service: true` since JIT runners are inherently single-use.
+
+```yml
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-123
+          ec2-instance-type: t3.nano
+          subnet-id: subnet-123
+          security-group-id: sg-123
+          use-jit: true
+          runner-group-id: 1  # optional, defaults to the "Default" runner group
+```
+
+### Advanced: Multi-AZ failover
+
+The `availability-zones-config` input allows you to specify multiple availability zone configurations. The action will try each one in sequence until an instance is successfully launched. This is useful for handling capacity issues or spot instance unavailability in a specific AZ.
+
+Each configuration object requires `imageId`, `subnetId`, and `securityGroupId`. You can optionally specify a `region` per entry; if omitted, the `AWS_REGION` environment variable is used.
+
+```yml
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-instance-type: t3.nano
+          market-type: spot
+          availability-zones-config: >
+            [
+              {"imageId": "ami-123", "subnetId": "subnet-aaa", "securityGroupId": "sg-111"},
+              {"imageId": "ami-456", "subnetId": "subnet-bbb", "securityGroupId": "sg-222", "region": "us-west-2"},
+              {"imageId": "ami-789", "subnetId": "subnet-ccc", "securityGroupId": "sg-333", "region": "eu-west-1"}
+            ]
+```
+
+### Advanced: Debug mode
+
+When a runner fails to register, it can be difficult to diagnose the issue because user-data scripts execute on the remote EC2 instance. The `runner-debug` input enables verbose logging to help with troubleshooting.
+
+When `runner-debug: true` is set, the action will:
+
+1. **Inject detailed echo statements** into the setup script on the instance — logging each step (architecture detection, runner download, config.sh execution, etc.)
+2. **Poll the EC2 serial console output** during the registration wait loop, streaming new output to the GitHub Actions log as it appears
+3. **Log the full user-data script** content so you can see exactly what was sent to the instance
+
+This requires the `ec2:GetConsoleOutput` IAM permission. Add the following to your IAM policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ec2:GetConsoleOutput",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+> **Note:** EC2 serial console output takes 2-5 minutes to become available after instance launch and may not capture all output from user-data scripts. For full script logs, SSH into the instance and check `/tmp/runner-setup.log`.
+
+```yml
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-123
+          ec2-instance-type: t3.nano
+          subnet-id: subnet-123
+          security-group-id: sg-123
+          runner-debug: true
+          startup-timeout-minutes: 10  # increase timeout when debugging
 ```
 
 ### Real user examples
