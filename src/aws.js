@@ -84,7 +84,7 @@ function buildRunCommands(githubRegistrationToken, label) {
     core.info('Runner will be started without service wrapper');
     userData.push('echo "[RUNNER] Starting runner with run.sh..."');
     if (config.input.runAsUser) {
-      userData.push(`su ${config.input.runAsUser} -c ./run.sh`);
+      userData.push(`runuser -u ${config.input.runAsUser} -- ./run.sh`);
     } else {
       userData.push('./run.sh');
     }
