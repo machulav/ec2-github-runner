@@ -97,10 +97,62 @@ function buildRunCommands(githubRegistrationToken, label) {
   return userData.filter(Boolean);
 }
 
+// Build the commands to run on the instance for JIT mode.
+// JIT runners skip config.sh entirely and pass the encoded config directly to run.sh.
+function buildJitRunCommands(encodedJitConfig) {
+  const debug = config.input.runnerDebug;
+  const dbg = (cmd) => debug ? cmd : null;
+
+  // Common preamble: fail-fast and log capture
+  const preamble = [
+    '#!/bin/bash',
+    'LOGFILE=/tmp/runner-setup.log',
+    'exec > >(tee -a "$LOGFILE") 2>&1',
+    'set -e',
+    dbg('echo "[RUNNER] =========================================="'),
+    dbg('echo "[RUNNER] JIT Setup script started at $(date -u)"'),
+    dbg('echo "[RUNNER] =========================================="'),
+  ].filter(Boolean);
+
+  let userData;
+  if (config.input.runnerHomeDir) {
+    userData = [
+      ...preamble,
+      `cd "${config.input.runnerHomeDir}"`,
+      'source /tmp/pre-runner-script.sh',
+      'export RUNNER_ALLOW_RUNASROOT=1',
+      // Remove stale runner config from AMI so run.sh doesn't get confused
+      'rm -f .runner .credentials .credentials_rsaparams',
+    ];
+  } else {
+    userData = [
+      ...preamble,
+      'mkdir actions-runner && cd actions-runner',
+      'source /tmp/pre-runner-script.sh',
+      'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
+      `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/' | tr -d "v")`,
+      'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
+      'export RUNNER_ALLOW_RUNASROOT=1',
+    ];
+  }
+
+  if (config.input.runAsUser) {
+    userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || true`);
+    userData.push(`runuser -u ${config.input.runAsUser} -- ./run.sh --jitconfig ${encodedJitConfig}`);
+  } else {
+    userData.push(`./run.sh --jitconfig ${encodedJitConfig}`);
+  }
+
+  return userData;
+}
+
 // Build user data as a cloud-boothook (runs during cloud-init init stage,
 // bypassing cloud_final_modules which may be empty on some AMIs)
-function buildUserDataScript(githubRegistrationToken, label) {
-  const runCommands = buildRunCommands(githubRegistrationToken, label);
+function buildUserDataScript(githubRegistrationToken, label, encodedJitConfig) {
+  const runCommands = encodedJitConfig
+    ? buildJitRunCommands(encodedJitConfig)
+    : buildRunCommands(githubRegistrationToken, label);
 
   const lines = [];
 
@@ -165,12 +217,12 @@ function buildMarketOptions() {
   };
 }
 
-async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region) {
+async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region, encodedJitConfig) {
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
 
-  const userData = buildUserDataScript(githubRegistrationToken, label);
+  const userData = buildUserDataScript(githubRegistrationToken, label, encodedJitConfig);
 
   const params = {
     ImageId: imageId,
@@ -207,7 +259,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
   return ec2InstanceId;
 }
 
-async function startEc2Instance(label, githubRegistrationToken) {
+async function startEc2Instance(label, githubRegistrationToken, encodedJitConfig) {
   core.info(`Attempting to start EC2 instance using ${config.availabilityZones.length} availability zone configuration(s)`);
 
   const errors = [];
@@ -227,7 +279,8 @@ async function startEc2Instance(label, githubRegistrationToken) {
         azConfig.securityGroupId,
         label,
         githubRegistrationToken,
-        region
+        region,
+        encodedJitConfig
       );
 
       core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1} in region ${region}`);
@@ -333,4 +386,6 @@ module.exports = {
   terminateEc2Instance,
   waitForInstanceRunning,
   getInstanceConsoleOutput,
+  // Exposed for testing only
+  _buildUserDataScriptForTest: buildUserDataScript,
 };

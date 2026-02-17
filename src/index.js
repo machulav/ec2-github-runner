@@ -11,8 +11,19 @@ function setOutput(label, ec2InstanceId, region) {
 
 async function start() {
   const label = config.input.label ? config.input.label : config.generateUniqueLabel();
-  const githubRegistrationToken = await gh.getRegistrationToken();
-  const result = await aws.startEc2Instance(label, githubRegistrationToken);
+
+  let githubRegistrationToken = null;
+  let encodedJitConfig = null;
+
+  if (config.input.useJit) {
+    const jitConfig = await gh.getJitRunnerConfig(label);
+    encodedJitConfig = jitConfig.encodedJitConfig;
+    core.info(`JIT runner created with runner ID: ${jitConfig.runnerId}`);
+  } else {
+    githubRegistrationToken = await gh.getRegistrationToken();
+  }
+
+  const result = await aws.startEc2Instance(label, githubRegistrationToken, encodedJitConfig);
   const ec2InstanceId = result.ec2InstanceId;
   const region = result.region;
 
@@ -44,7 +55,12 @@ async function start() {
 
 async function stop() {
   await aws.terminateEc2Instance();
-  await gh.removeRunner();
+
+  if (config.input.useJit) {
+    core.info('JIT runner auto-deregisters after job completion. Skipping runner removal.');
+  } else {
+    await gh.removeRunner();
+  }
 }
 
 (async function () {
