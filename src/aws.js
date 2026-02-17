@@ -301,12 +301,16 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
 async function getInstanceConsoleOutput(ec2InstanceId, region) {
   const ec2 = new EC2Client({ region });
   try {
+    core.info(`Fetching console output for instance ${ec2InstanceId}...`);
     const result = await ec2.send(new GetConsoleOutputCommand({
       InstanceId: ec2InstanceId,
     }));
     if (result.Output) {
-      return Buffer.from(result.Output, 'base64').toString('utf-8');
+      const decoded = Buffer.from(result.Output, 'base64').toString('utf-8');
+      core.info(`Console output received: ${decoded.length} bytes`);
+      return decoded;
     }
+    core.info('Console output not yet available (empty response from EC2 API - this is normal during early boot)');
     return null;
   } catch (error) {
     core.warning(`Failed to fetch console output for ${ec2InstanceId}: ${error.message}`);

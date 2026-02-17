@@ -78,7 +78,7 @@ async function waitForRunnerRegistered(label, onPollCallback) {
         core.error('GitHub self-hosted runner registration error');
         // Fetch console output one last time before failing
         if (onPollCallback) {
-          try { await onPollCallback(); } catch (e) { /* ignore */ }
+          try { await onPollCallback(); } catch (e) { core.warning(`Poll callback error: ${e.message}`); }
         }
         clearInterval(interval);
         reject(
@@ -87,7 +87,7 @@ async function waitForRunnerRegistered(label, onPollCallback) {
       } else {
         core.info(`Checking... (${elapsedSec}s elapsed)`);
         if (onPollCallback) {
-          try { await onPollCallback(); } catch (e) { /* ignore */ }
+          try { await onPollCallback(); } catch (e) { core.warning(`Poll callback error: ${e.message}`); }
         }
       }
     }, retryIntervalSeconds * 1000);
