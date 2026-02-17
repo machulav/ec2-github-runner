@@ -288,6 +288,7 @@ async function getInstanceConsoleOutput(ec2InstanceId, region) {
     core.info(`Fetching console output for instance ${ec2InstanceId}...`);
     const result = await ec2.send(new GetConsoleOutputCommand({
       InstanceId: ec2InstanceId,
+      Latest: true,
     }));
     if (result.Output) {
       const decoded = Buffer.from(result.Output, 'base64').toString('utf-8');
