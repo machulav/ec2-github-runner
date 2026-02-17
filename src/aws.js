@@ -5,98 +5,96 @@ const config = require('./config');
 
 // Build the commands to run on the instance
 function buildRunCommands(githubRegistrationToken, label) {
-  // Common preamble: fail-fast, log capture, and instance metadata
+  const debug = config.input.runnerDebug;
+
+  // Helper: only include a command when debug is enabled
+  const dbg = (cmd) => debug ? cmd : null;
+
+  // Common preamble: fail-fast and log capture
   const preamble = [
     '#!/bin/bash',
     'LOGFILE=/tmp/runner-setup.log',
     'exec > >(tee -a "$LOGFILE") 2>&1',
     'set -e',
-    'echo "[RUNNER] =========================================="',
-    'echo "[RUNNER] Setup script started at $(date -u)"',
-    'echo "[RUNNER] =========================================="',
-    'echo "[RUNNER] Instance ID: $(curl -sf http://169.254.169.254/latest/meta-data/instance-id || echo unknown)"',
-    'echo "[RUNNER] Instance type: $(curl -sf http://169.254.169.254/latest/meta-data/instance-type || echo unknown)"',
-    'echo "[RUNNER] AMI ID: $(curl -sf http://169.254.169.254/latest/meta-data/ami-id || echo unknown)"',
-    'echo "[RUNNER] Hostname: $(hostname)"',
-    'echo "[RUNNER] Kernel: $(uname -r)"',
-    'echo "[RUNNER] Disk usage:" && df -h',
-    'echo "[RUNNER] Memory:" && free -h',
-  ];
+    dbg('echo "[RUNNER] =========================================="'),
+    dbg('echo "[RUNNER] Setup script started at $(date -u)"'),
+    dbg('echo "[RUNNER] =========================================="'),
+    dbg('echo "[RUNNER] Instance ID: $(curl -sf http://169.254.169.254/latest/meta-data/instance-id || echo unknown)"'),
+    dbg('echo "[RUNNER] Instance type: $(curl -sf http://169.254.169.254/latest/meta-data/instance-type || echo unknown)"'),
+    dbg('echo "[RUNNER] AMI ID: $(curl -sf http://169.254.169.254/latest/meta-data/ami-id || echo unknown)"'),
+    dbg('echo "[RUNNER] Hostname: $(hostname)"'),
+    dbg('echo "[RUNNER] Kernel: $(uname -r)"'),
+    dbg('echo "[RUNNER] Disk usage:" && df -h'),
+    dbg('echo "[RUNNER] Memory:" && free -h'),
+  ].filter(Boolean);
 
   let userData;
   if (config.input.runnerHomeDir) {
     core.info('Runner home directory is specified, so it is expected that the actions-runner software (and dependencies) are pre-installed in the AMI.');
     userData = [
       ...preamble,
-      `echo "[RUNNER] Changing to runner home dir: ${config.input.runnerHomeDir}"`,
+      dbg(`echo "[RUNNER] Changing to runner home dir: ${config.input.runnerHomeDir}"`),
       `cd "${config.input.runnerHomeDir}"`,
-      'echo "[RUNNER] Directory contents:" && ls -la',
-      'echo "[RUNNER] Sourcing pre-runner script..."',
+      dbg('echo "[RUNNER] Directory contents:" && ls -la'),
+      dbg('echo "[RUNNER] Sourcing pre-runner script..."'),
       'source /tmp/pre-runner-script.sh',
-      'echo "[RUNNER] Pre-runner script completed"',
+      dbg('echo "[RUNNER] Pre-runner script completed"'),
       'export RUNNER_ALLOW_RUNASROOT=1',
       // Remove stale runner config from AMI so config.sh doesn't refuse to run
-      'echo "[RUNNER] Removing any existing runner configuration..."',
       'rm -f .runner .credentials .credentials_rsaparams',
-      `echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`,
-      `echo "[RUNNER] Target repo: ${config.githubContext.owner}/${config.githubContext.repo}"`,
+      dbg(`echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`),
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
-      'echo "[RUNNER] config.sh completed successfully"',
-    ];
+      dbg('echo "[RUNNER] config.sh completed successfully"'),
+    ].filter(Boolean);
   } else {
     core.info('Runner home directory is not specified, so the latest actions-runner software will be downloaded and installed.');
     userData = [
       ...preamble,
-      'echo "[RUNNER] Creating actions-runner directory"',
+      dbg('echo "[RUNNER] Creating actions-runner directory"'),
       'mkdir actions-runner && cd actions-runner',
-      'echo "[RUNNER] Working directory: $(pwd)"',
-      'echo "[RUNNER] Sourcing pre-runner script..."',
+      dbg('echo "[RUNNER] Working directory: $(pwd)"'),
+      dbg('echo "[RUNNER] Sourcing pre-runner script..."'),
       'source /tmp/pre-runner-script.sh',
-      'echo "[RUNNER] Pre-runner script completed"',
-      'echo "[RUNNER] Detecting architecture..."',
+      dbg('echo "[RUNNER] Pre-runner script completed"'),
+      dbg('echo "[RUNNER] Detecting architecture..."'),
       'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
-      'echo "[RUNNER] Architecture: ${RUNNER_ARCH}"',
-      'echo "[RUNNER] Fetching latest runner version from GitHub API..."',
+      dbg('echo "[RUNNER] Architecture: ${RUNNER_ARCH}"'),
+      dbg('echo "[RUNNER] Fetching latest runner version from GitHub API..."'),
       `RUNNER_VERSION=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/' | tr -d "v")`,
-      'echo "[RUNNER] Runner version: v${RUNNER_VERSION}"',
-      'echo "[RUNNER] Downloading runner tarball..."',
+      dbg('echo "[RUNNER] Runner version: v${RUNNER_VERSION}"'),
+      dbg('echo "[RUNNER] Downloading runner tarball..."'),
       'curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
-      'echo "[RUNNER] Download complete. Extracting..."',
+      dbg('echo "[RUNNER] Download complete. Extracting..."'),
       'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz',
-      'echo "[RUNNER] Extraction complete. Directory contents:" && ls -la',
+      dbg('echo "[RUNNER] Extraction complete. Directory contents:" && ls -la'),
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`,
-      `echo "[RUNNER] Target repo: ${config.githubContext.owner}/${config.githubContext.repo}"`,
+      dbg(`echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`),
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
-      'echo "[RUNNER] config.sh completed successfully"',
-    ];
+      dbg('echo "[RUNNER] config.sh completed successfully"'),
+    ].filter(Boolean);
   }
   if (config.input.runAsUser) {
-    userData.push(`echo "[RUNNER] Changing ownership to user: ${config.input.runAsUser}"`);
-    userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || echo "[RUNNER] WARNING: some files could not be chowned (non-fatal)"`);
+    userData.push(`chown -R ${config.input.runAsUser} . 2>&1 || true`);
   }
   if (config.input.runAsService) {
     core.info('Runner will be started with service wrapper');
-    userData.push('echo "[RUNNER] Installing runner as service..."');
     userData.push(`./svc.sh install ${config.input.runAsUser || ''}`);
-    userData.push('echo "[RUNNER] Starting service..."');
     userData.push('./svc.sh start');
-    userData.push('echo "[RUNNER] Service started. Checking status..."');
-    userData.push('./svc.sh status || echo "[RUNNER] WARNING: svc.sh status returned non-zero"');
+    userData.push(dbg('./svc.sh status || echo "[RUNNER] WARNING: svc.sh status returned non-zero"'));
   } else {
     core.info('Runner will be started without service wrapper');
-    userData.push('echo "[RUNNER] Starting runner with run.sh..."');
     if (config.input.runAsUser) {
       userData.push(`runuser -u ${config.input.runAsUser} -- ./run.sh`);
     } else {
       userData.push('./run.sh');
     }
-    userData.push('echo "[RUNNER] run.sh exited with code $?"');
   }
-  userData.push('echo "[RUNNER] =========================================="');
-  userData.push('echo "[RUNNER] Setup script finished at $(date -u)"');
-  userData.push('echo "[RUNNER] =========================================="');
-  return userData;
+  if (debug) {
+    userData.push('echo "[RUNNER] =========================================="');
+    userData.push('echo "[RUNNER] Setup script finished at $(date -u)"');
+    userData.push('echo "[RUNNER] =========================================="');
+  }
+  return userData.filter(Boolean);
 }
 
 // Build user data as a cloud-boothook (runs during cloud-init init stage,
@@ -147,7 +145,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
   const script = lines.join('\n') + '\n';
 
   core.info('User data script is built successfully');
-  core.info(`User data script content:\n${script}`);
+  if (config.input.runnerDebug) {
+    core.info(`User data script content:\n${script}`);
+  }
 
   return script;
 }
@@ -304,17 +304,23 @@ async function waitForInstanceRunning(ec2InstanceId, region) {
 async function getInstanceConsoleOutput(ec2InstanceId, region) {
   const ec2 = new EC2Client({ region });
   try {
-    core.info(`Fetching console output for instance ${ec2InstanceId}...`);
+    if (config.input.runnerDebug) {
+      core.info(`Fetching console output for instance ${ec2InstanceId}...`);
+    }
     const result = await ec2.send(new GetConsoleOutputCommand({
       InstanceId: ec2InstanceId,
       Latest: true,
     }));
     if (result.Output) {
       const decoded = Buffer.from(result.Output, 'base64').toString('utf-8');
-      core.info(`Console output received: ${decoded.length} bytes`);
+      if (config.input.runnerDebug) {
+        core.info(`Console output received: ${decoded.length} bytes`);
+      }
       return decoded;
     }
-    core.info('Console output not yet available (empty response from EC2 API - this is normal during early boot)');
+    if (config.input.runnerDebug) {
+      core.info('Console output not yet available (empty response from EC2 API - this is normal during early boot)');
+    }
     return null;
   } catch (error) {
     core.warning(`Failed to fetch console output for ${ec2InstanceId}: ${error.message}`);
