@@ -242,6 +242,17 @@ describe('aws.js - user-data generation', () => {
     expect(userData).toContain('nohup /opt/runner-setup.sh &');
   });
 
+  test('user-data includes Docker readiness gate before setup script', () => {
+    const aws = loadFreshAws();
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('Waiting for Docker to be ready');
+    expect(userData).toContain('docker version &>/dev/null && break');
+    // Docker gate must appear before the setup script
+    const dockerGateIdx = userData.indexOf('Waiting for Docker');
+    const setupScriptIdx = userData.indexOf('nohup /opt/runner-setup.sh');
+    expect(dockerGateIdx).toBeLessThan(setupScriptIdx);
+  });
+
   test('standard user-data removes stale runner config files', () => {
     const aws = loadFreshAws({ 'runner-home-dir': '/home/runner/actions-runner' });
     const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
