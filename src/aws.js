@@ -96,36 +96,52 @@ function buildRunCommands(githubRegistrationToken, label) {
   return userData;
 }
 
-// Build user data as a raw bash script (executed directly by cloud-init on boot)
+// Build user data as a cloud-boothook (runs during cloud-init init stage,
+// bypassing cloud_final_modules which may be empty on some AMIs)
 function buildUserDataScript(githubRegistrationToken, label) {
   const runCommands = buildRunCommands(githubRegistrationToken, label);
 
-  // Start with the shebang from runCommands
-  const scriptLines = [runCommands[0]]; // #!/bin/bash
+  const lines = [];
 
-  // Write pre-runner script to /tmp using heredoc
-  scriptLines.push("cat > /tmp/pre-runner-script.sh << 'PRERUNNEREOF'");
+  // cloud-boothook header — processed during init stage, not final stage
+  lines.push('#cloud-boothook');
+  lines.push('#!/bin/bash');
+  lines.push('# Guard: only run once per boot');
+  lines.push('[ -f /run/runner-setup-started ] && exit 0');
+  lines.push('touch /run/runner-setup-started');
+  lines.push('');
+
+  // Write pre-runner script
+  lines.push("cat > /tmp/pre-runner-script.sh << 'PRERUNNEREOF'");
   if (config.input.preRunnerScript) {
-    scriptLines.push(config.input.preRunnerScript);
+    lines.push(config.input.preRunnerScript);
   } else {
-    scriptLines.push('#!/bin/bash');
+    lines.push('#!/bin/bash');
   }
-  scriptLines.push('PRERUNNEREOF');
-  scriptLines.push('chmod 755 /tmp/pre-runner-script.sh');
+  lines.push('PRERUNNEREOF');
+  lines.push('chmod 755 /tmp/pre-runner-script.sh');
+  lines.push('');
 
   // Install packages if specified
   if (config.input.packages && config.input.packages.length > 0) {
     const pkgList = config.input.packages.join(' ');
-    scriptLines.push(`echo "[RUNNER] Installing packages: ${pkgList}"`);
-    scriptLines.push(`yum install -y ${pkgList} || apt-get install -y ${pkgList} || echo "[RUNNER] WARNING: package installation failed"`);
+    lines.push(`echo "[BOOTHOOK] Installing packages: ${pkgList}"`);
+    lines.push(`yum install -y ${pkgList} || apt-get install -y ${pkgList} || echo "[BOOTHOOK] WARNING: package installation failed"`);
   }
 
-  // Append the rest of runCommands (skip shebang, already added)
-  for (let i = 1; i < runCommands.length; i++) {
-    scriptLines.push(runCommands[i]);
+  // Write the setup script to /opt/ using heredoc (quoted delimiter = no variable expansion)
+  lines.push("cat > /opt/runner-setup.sh << 'RUNNERSETUPEOF'");
+  for (let i = 0; i < runCommands.length; i++) {
+    lines.push(runCommands[i]);
   }
+  lines.push('RUNNERSETUPEOF');
+  lines.push('chmod 755 /opt/runner-setup.sh');
+  lines.push('');
 
-  const script = scriptLines.join('\n') + '\n';
+  // Execute setup in background so boothook returns quickly and doesn't block cloud-init
+  lines.push('nohup /opt/runner-setup.sh &');
+
+  const script = lines.join('\n') + '\n';
 
   core.info('User data script is built successfully');
   core.info(`User data script content:\n${script}`);
