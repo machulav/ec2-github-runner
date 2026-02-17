@@ -96,58 +96,41 @@ function buildRunCommands(githubRegistrationToken, label) {
   return userData;
 }
 
-// Build cloud-init YAML user data
+// Build user data as a raw bash script (executed directly by cloud-init on boot)
 function buildUserDataScript(githubRegistrationToken, label) {
   const runCommands = buildRunCommands(githubRegistrationToken, label);
 
-  // Create a script file with all commands to avoid YAML escaping issues
-  const scriptContent = runCommands.join('\n');
+  // Start with the shebang from runCommands
+  const scriptLines = [runCommands[0]]; // #!/bin/bash
 
-  // Start with cloud-init header
-  let yamlContent = '#cloud-config\n';
-
-  // Add packages if specified
-  if (config.input.packages && config.input.packages.length > 0) {
-    yamlContent += 'packages:\n';
-    config.input.packages.forEach(pkg => {
-      yamlContent += `  - ${pkg}\n`;
-    });
-  }
-
-  // Write files
-  yamlContent += 'write_files:\n';
-
-  // Always write pre-runner script (even if empty) since runner-setup.sh always sources it
-  yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
-  yamlContent += '    permissions: "0755"\n';
-  yamlContent += '    content: |\n';
-
+  // Write pre-runner script to /tmp using heredoc
+  scriptLines.push("cat > /tmp/pre-runner-script.sh << 'PRERUNNEREOF'");
   if (config.input.preRunnerScript) {
-    config.input.preRunnerScript.split('\n').forEach(line => {
-      yamlContent += `      ${line}\n`;
-    });
+    scriptLines.push(config.input.preRunnerScript);
   } else {
-    yamlContent += '      #!/bin/bash\n';
+    scriptLines.push('#!/bin/bash');
+  }
+  scriptLines.push('PRERUNNEREOF');
+  scriptLines.push('chmod 755 /tmp/pre-runner-script.sh');
+
+  // Install packages if specified
+  if (config.input.packages && config.input.packages.length > 0) {
+    const pkgList = config.input.packages.join(' ');
+    scriptLines.push(`echo "[RUNNER] Installing packages: ${pkgList}"`);
+    scriptLines.push(`yum install -y ${pkgList} || apt-get install -y ${pkgList} || echo "[RUNNER] WARNING: package installation failed"`);
   }
 
-  // Write main setup script
-  yamlContent += '  - path: /tmp/runner-setup.sh\n';
-  yamlContent += '    permissions: "0755"\n';
-  yamlContent += '    content: |\n';
+  // Append the rest of runCommands (skip shebang, already added)
+  for (let i = 1; i < runCommands.length; i++) {
+    scriptLines.push(runCommands[i]);
+  }
 
-  // Add each line of the script with proper indentation
-  scriptContent.split('\n').forEach(line => {
-    yamlContent += `      ${line}\n`;
-  });
+  const script = scriptLines.join('\n') + '\n';
 
-  // Execute the script
-  yamlContent += 'runcmd:\n';
-  yamlContent += '  - /tmp/runner-setup.sh\n';
+  core.info('User data script is built successfully');
+  core.info(`User data script content:\n${script}`);
 
-  core.info("User data script is built successfully");
-  core.info(`User data script content:\n${yamlContent}`);
-
-  return yamlContent;
+  return script;
 }
 
 function buildMarketOptions() {
