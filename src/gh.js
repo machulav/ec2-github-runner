@@ -78,7 +78,7 @@ async function removeRunner() {
   }
 }
 
-async function waitForRunnerRegistered(label) {
+async function waitForRunnerRegistered(label, onPollCallback) {
   const timeoutMinutes = parseInt(config.input.startupTimeoutMinutes) || 5;
   const retryIntervalSeconds = parseInt(config.input.startupRetryIntervalSeconds) || 10;
   const quietPeriodSeconds = parseInt(config.input.startupQuietPeriodSeconds) || 30;
@@ -94,6 +94,7 @@ async function waitForRunnerRegistered(label) {
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
       const elapsedMs = Date.now() - startTime;
+      const elapsedSec = Math.round(elapsedMs / 1000);
       const runner = await getRunner(label);
 
       if (runner && runner.status === 'online') {
@@ -102,12 +103,19 @@ async function waitForRunnerRegistered(label) {
         resolve();
       } else if (elapsedMs >= timeoutMs) {
         core.error('GitHub self-hosted runner registration error');
+        // Fetch console output one last time before failing
+        if (onPollCallback) {
+          try { await onPollCallback(); } catch (e) { core.warning(`Poll callback error: ${e.message}`); }
+        }
         clearInterval(interval);
         reject(
           `A timeout of ${timeoutMinutes} minutes is exceeded. Your AWS EC2 instance was not able to register itself in GitHub as a new self-hosted runner.`,
         );
       } else {
-        core.info('Checking...');
+        core.info(`Checking... (${elapsedSec}s elapsed)`);
+        if (onPollCallback) {
+          try { await onPollCallback(); } catch (e) { core.warning(`Poll callback error: ${e.message}`); }
+        }
       }
     }, retryIntervalSeconds * 1000);
   });

@@ -150,6 +150,13 @@ inputs:
       Only used when 'use-jit' is true.
     required: false
     default: '1'
+  runner-debug:
+    description: >-
+      Enable verbose debug logging for the runner setup.
+      When true, outputs detailed instance info, console output polling,
+      and step-by-step script execution logs.
+    required: false
+    default: 'false'
 outputs:
   label:
     description: >-

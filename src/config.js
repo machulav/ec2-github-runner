@@ -30,6 +30,7 @@ class Config {
       packages: JSON.parse(core.getInput('packages') || '[]'),
       useJit: core.getInput('use-jit') === 'true',
       runnerGroupId: parseInt(core.getInput('runner-group-id') || '1', 10),
+      runnerDebug: core.getInput('runner-debug') === 'true',
     };
 
     // Get the AWS_REGION environment variable

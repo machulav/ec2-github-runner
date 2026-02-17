@@ -32,7 +32,25 @@ async function start() {
 
   // Wait for the instance to be running
   await aws.waitForInstanceRunning(ec2InstanceId, region);
-  await gh.waitForRunnerRegistered(label);
+
+  let pollCallback = null;
+
+  if (config.input.runnerDebug) {
+    // Track how much console output we've already printed to avoid duplicates
+    let lastOutputLength = 0;
+
+    // Poll callback: fetch EC2 serial console output and log any new content
+    pollCallback = async () => {
+      const output = await aws.getInstanceConsoleOutput(ec2InstanceId, region);
+      if (output && output.length > lastOutputLength) {
+        const newOutput = output.substring(lastOutputLength);
+        core.info(`--- EC2 Console Output ---\n${newOutput}--- End Console Output ---`);
+        lastOutputLength = output.length;
+      }
+    };
+  }
+
+  await gh.waitForRunnerRegistered(label, pollCallback);
 }
 
 async function stop() {

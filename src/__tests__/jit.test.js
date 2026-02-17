@@ -61,6 +61,7 @@ const defaultInputs = {
   'aws-resource-tags': '[]',
   'use-jit': 'false',
   'runner-group-id': '1',
+  'runner-debug': 'false',
 };
 
 function setupInputs(overrides = {}) {
@@ -198,11 +199,10 @@ describe('aws.js - user-data generation', () => {
     expect(userData).toContain('--jitconfig encodedconfig123');
   });
 
-  test('JIT user-data with runAsUser wraps in su', () => {
+  test('JIT user-data with runAsUser uses runuser', () => {
     const aws = loadFreshAws({ 'use-jit': 'true', 'run-runner-as-user': 'ubuntu' });
     const userData = aws._buildUserDataScriptForTest(null, 'testlabel', 'encodedconfig123');
-    expect(userData).toContain('su ubuntu -c');
-    expect(userData).toContain('--jitconfig encodedconfig123');
+    expect(userData).toContain('runuser -u ubuntu -- ./run.sh --jitconfig encodedconfig123');
   });
 
   test('standard (non-JIT) user-data contains config.sh', () => {
@@ -224,5 +224,86 @@ describe('aws.js - user-data generation', () => {
     const aws = loadFreshAws({ 'use-jit': 'true' });
     const userData = aws._buildUserDataScriptForTest(null, 'testlabel', 'encodedconfig123');
     expect(userData).not.toContain('svc.sh');
+  });
+
+  test('user-data uses cloud-boothook format with run-once guard', () => {
+    const aws = loadFreshAws();
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toMatch(/^#cloud-boothook\n/);
+    expect(userData).toContain('[ -f /run/runner-setup-started ] && exit 0');
+    expect(userData).toContain('touch /run/runner-setup-started');
+  });
+
+  test('user-data writes setup script to /opt/ and runs with nohup', () => {
+    const aws = loadFreshAws();
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain("cat > /opt/runner-setup.sh << 'RUNNERSETUPEOF'");
+    expect(userData).toContain('chmod 755 /opt/runner-setup.sh');
+    expect(userData).toContain('nohup /opt/runner-setup.sh &');
+  });
+
+  test('standard user-data removes stale runner config files', () => {
+    const aws = loadFreshAws({ 'runner-home-dir': '/home/runner/actions-runner' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('rm -f .runner .credentials .credentials_rsaparams');
+  });
+
+  test('JIT user-data removes stale runner config files', () => {
+    const aws = loadFreshAws({ 'use-jit': 'true', 'runner-home-dir': '/home/runner/actions-runner' });
+    const userData = aws._buildUserDataScriptForTest(null, 'testlabel', 'encodedconfig123');
+    expect(userData).toContain('rm -f .runner .credentials .credentials_rsaparams');
+  });
+
+  test('standard user-data with runAsUser uses runuser instead of su', () => {
+    const aws = loadFreshAws({ 'run-runner-as-user': 'ec2-user' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('runuser -u ec2-user -- ./run.sh');
+    expect(userData).not.toContain('su ec2-user');
+  });
+
+  test('standard user-data with runAsUser uses tolerant chown', () => {
+    const aws = loadFreshAws({ 'run-runner-as-user': 'ec2-user' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('chown -R ec2-user . 2>&1 || true');
+  });
+
+  test('user-data installs packages when specified', () => {
+    const aws = loadFreshAws({ 'packages': '["git", "docker.io"]' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('git docker.io');
+    expect(userData).toContain('yum install -y');
+  });
+});
+
+describe('aws.js - runner-debug', () => {
+  test('debug mode includes echo statements', () => {
+    const aws = loadFreshAws({ 'runner-debug': 'true' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).toContain('[RUNNER]');
+    expect(userData).toContain('echo "[RUNNER] Setup script started at');
+  });
+
+  test('non-debug mode excludes echo statements', () => {
+    const aws = loadFreshAws({ 'runner-debug': 'false' });
+    const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
+    expect(userData).not.toContain('[RUNNER] Setup script started');
+  });
+});
+
+describe('Config - runner-debug input', () => {
+  beforeEach(() => {
+    process.env.AWS_REGION = 'us-east-1';
+  });
+
+  test('reads runnerDebug as false by default', () => {
+    setupInputs();
+    const config = createConfig();
+    expect(config.input.runnerDebug).toBe(false);
+  });
+
+  test('reads runnerDebug as true when set', () => {
+    setupInputs({ 'runner-debug': 'true' });
+    const config = createConfig();
+    expect(config.input.runnerDebug).toBe(true);
   });
 });
