@@ -19,6 +19,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
     ];
   } else {
+    core.info('Runner home directory is not specified, so the latest actions-runner software will be downloaded and installed on the instance, and then the runner will be started');
     userData = [
       '#!/bin/bash',
       'exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1',
@@ -93,6 +94,9 @@ function buildUserDataScript(githubRegistrationToken, label) {
   // Execute the script
   yamlContent += 'runcmd:\n';
   yamlContent += '  - /tmp/runner-setup.sh\n';
+
+  core.info("User data script is built successfully");
+  core.info(`User data script content:\n${yamlContent}`);
 
   return yamlContent;
 }
