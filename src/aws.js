@@ -147,61 +147,57 @@ function buildJitRunCommands(encodedJitConfig) {
   return userData;
 }
 
-// Build user data as a cloud-boothook (runs during cloud-init init stage,
-// bypassing cloud_final_modules which may be empty on some AMIs)
+// Build cloud-init YAML user data
 function buildUserDataScript(githubRegistrationToken, label, encodedJitConfig) {
+  // 1. Get the list of shell commands (keep your new buildRunCommands logic!)
   const runCommands = encodedJitConfig
     ? buildJitRunCommands(encodedJitConfig)
     : buildRunCommands(githubRegistrationToken, label);
 
-  const lines = [];
+  // 2. Start the YAML content
+  let yamlContent = '#cloud-config\n';
 
-  // cloud-boothook header — processed during init stage, not final stage
-  lines.push('#cloud-boothook');
-  lines.push('#!/bin/bash');
-  lines.push('# Guard: only run once per boot');
-  lines.push('[ -f /run/runner-setup-started ] && exit 0');
-  lines.push('touch /run/runner-setup-started');
-  lines.push('');
+  // 3. Add packages if specified
+  if (config.input.packages && config.input.packages.length > 0) {
+    yamlContent += 'packages:\n';
+    config.input.packages.forEach(pkg => {
+      yamlContent += `  - ${pkg}\n`;
+    });
+  }
+
+  // 4. write_files section
+  yamlContent += 'write_files:\n';
 
   // Write pre-runner script
-  lines.push("cat > /tmp/pre-runner-script.sh << 'PRERUNNEREOF'");
+  yamlContent += '  - path: /tmp/pre-runner-script.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
   if (config.input.preRunnerScript) {
-    lines.push(config.input.preRunnerScript);
+    // Indent the script content for YAML
+    config.input.preRunnerScript.split('\n').forEach(line => {
+      yamlContent += `      ${line}\n`;
+    });
   } else {
-    lines.push('#!/bin/bash');
-  }
-  lines.push('PRERUNNEREOF');
-  lines.push('chmod 755 /tmp/pre-runner-script.sh');
-  lines.push('');
-
-  // Install packages if specified
-  if (config.input.packages && config.input.packages.length > 0) {
-    const pkgList = config.input.packages.join(' ');
-    lines.push(`echo "[BOOTHOOK] Installing packages: ${pkgList}"`);
-    lines.push(`yum install -y ${pkgList} || apt-get install -y ${pkgList} || echo "[BOOTHOOK] WARNING: package installation failed"`);
+    yamlContent += '      #!/bin/bash\n';
   }
 
-  // Write the setup script to /opt/ using heredoc (quoted delimiter = no variable expansion)
-  lines.push("cat > /opt/runner-setup.sh << 'RUNNERSETUPEOF'");
-  for (let i = 0; i < runCommands.length; i++) {
-    lines.push(runCommands[i]);
-  }
-  lines.push('RUNNERSETUPEOF');
-  lines.push('chmod 755 /opt/runner-setup.sh');
-  lines.push('');
+  // Write main setup script
+  yamlContent += '  - path: /opt/runner-setup.sh\n';
+  yamlContent += '    permissions: "0755"\n';
+  yamlContent += '    content: |\n';
 
-  // Execute setup in background so boothook returns quickly and doesn't block cloud-init
-  lines.push('nohup /opt/runner-setup.sh &');
+  // Add each line of the command list (from buildRunCommands)
+  runCommands.forEach(line => {
+    yamlContent += `      ${line}\n`;
+  });
 
-  const script = lines.join('\n') + '\n';
+  // 5. runcmd section - This runs AFTER Docker is up
+  yamlContent += 'runcmd:\n';
+  // We still use nohup just in case cloud-init kills the process group,
+  // but now the environment is fully ready.
+  yamlContent += '  - nohup /opt/runner-setup.sh &\n';
 
-  core.info('User data script is built successfully');
-  if (config.input.runnerDebug) {
-    core.info(`User data script content:\n${script}`);
-  }
-
-  return script;
+  return yamlContent;
 }
 
 function buildMarketOptions() {
