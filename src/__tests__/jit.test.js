@@ -226,19 +226,19 @@ describe('aws.js - user-data generation', () => {
     expect(userData).not.toContain('svc.sh');
   });
 
-  test('user-data uses cloud-boothook format with run-once guard', () => {
+  test('user-data uses cloud-config format with write_files and runcmd', () => {
     const aws = loadFreshAws();
     const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
-    expect(userData).toMatch(/^#cloud-boothook\n/);
-    expect(userData).toContain('[ -f /run/runner-setup-started ] && exit 0');
-    expect(userData).toContain('touch /run/runner-setup-started');
+    expect(userData).toMatch(/^#cloud-config\n/);
+    expect(userData).toContain('write_files:');
+    expect(userData).toContain('runcmd:');
   });
 
   test('user-data writes setup script to /opt/ and runs with nohup', () => {
     const aws = loadFreshAws();
     const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
-    expect(userData).toContain("cat > /opt/runner-setup.sh << 'RUNNERSETUPEOF'");
-    expect(userData).toContain('chmod 755 /opt/runner-setup.sh');
+    expect(userData).toContain('path: /opt/runner-setup.sh');
+    expect(userData).toContain('permissions: "0755"');
     expect(userData).toContain('nohup /opt/runner-setup.sh &');
   });
 
@@ -270,8 +270,9 @@ describe('aws.js - user-data generation', () => {
   test('user-data installs packages when specified', () => {
     const aws = loadFreshAws({ 'packages': '["git", "docker.io"]' });
     const userData = aws._buildUserDataScriptForTest('regtoken123', 'testlabel', null);
-    expect(userData).toContain('git docker.io');
-    expect(userData).toContain('yum install -y');
+    expect(userData).toContain('packages:');
+    expect(userData).toContain('  - git');
+    expect(userData).toContain('  - docker.io');
   });
 });
 
