@@ -32,7 +32,10 @@ inputs:
     required: false
   ec2-instance-type:
     description: >-
-      EC2 Instance Type.
+      EC2 Instance Type. Accepts a single instance type (e.g. 't3.micro') or a JSON array
+      of instance types (e.g. '["t3.micro", "t3.small", "m5.large"]').
+      When multiple types are provided, the action tries each type in order until one succeeds.
+      This is especially useful with spot instances where a specific instance type may not have capacity.
       This input is required if you use the 'start' mode.
     required: false
   subnet-id:

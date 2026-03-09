@@ -7,6 +7,7 @@ class Config {
       ec2ImageId: core.getInput('ec2-image-id'),
       ec2InstanceId: core.getInput('ec2-instance-id'),
       ec2InstanceType: core.getInput('ec2-instance-type'),
+      ec2InstanceTypes: [],
       githubToken: core.getInput('github-token'),
       iamRoleName: core.getInput('iam-role-name'),
       label: core.getInput('label'),
@@ -103,6 +104,28 @@ class Config {
       if (!this.input.ec2InstanceType) {
         throw new Error(`The 'ec2-instance-type' input is required for the 'start' mode.`);
       }
+
+      // Parse ec2-instance-type: supports a single string or a JSON array of strings
+      const rawType = this.input.ec2InstanceType.trim();
+      if (rawType.startsWith('[')) {
+        try {
+          this.input.ec2InstanceTypes = JSON.parse(rawType);
+          if (!Array.isArray(this.input.ec2InstanceTypes) || this.input.ec2InstanceTypes.length === 0) {
+            throw new Error('must be a non-empty JSON array of strings');
+          }
+          for (const t of this.input.ec2InstanceTypes) {
+            if (typeof t !== 'string' || t.trim().length === 0) {
+              throw new Error('each element must be a non-empty string');
+            }
+          }
+        } catch (error) {
+          throw new Error(`Invalid 'ec2-instance-type' input: ${error.message}`);
+        }
+      } else {
+        this.input.ec2InstanceTypes = [rawType];
+      }
+      // Keep ec2InstanceType pointing to the first type for backward compatibility
+      this.input.ec2InstanceType = this.input.ec2InstanceTypes[0];
 
       // If no availability zones config provided, check for individual parameters
       if (this.availabilityZones.length === 0) {
