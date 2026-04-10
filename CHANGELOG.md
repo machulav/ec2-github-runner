@@ -21,6 +21,8 @@
   runuser, tolerant chown, stale config cleanup, and package installation.
 
 ### Changed
+- Upgraded action runtime from `node20` to `node24` to resolve GitHub Actions deprecation warning (Node.js 20 actions deprecated June 2026).
+- Updated `package.yml` workflow to build distribution with Node.js 24.
 - Switched user-data format from `#cloud-config` with `runcmd` to `#cloud-boothook`.
   This fixes compatibility with Amazon Linux 2023 and other AMIs where
   `cloud_final_modules` may be empty or misconfigured.

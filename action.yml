@@ -173,5 +173,5 @@ outputs:
       AWS region where the EC2 instance was created.
       This is useful for subsequent AWS operations on the instance.
 runs:
-  using: node20
+  using: node24
   main: ./dist/index.js
