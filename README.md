@@ -237,7 +237,7 @@ Now you're ready to go!
 | `mode` | Always required. | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner. |
 | `github-token` | Always required. | GitHub Personal Access Token with the `repo` scope assigned. |
 | `ec2-image-id` | Required if you use the `start` mode and don't provide `availability-zones-config`. | EC2 Image Id (AMI). The new runner will be launched from this image. Compatible with Amazon Linux 2, Amazon Linux 2023, and Ubuntu images. |
-| `ec2-instance-type` | Required if you use the `start` mode. | EC2 Instance Type. |
+| `ec2-instance-type` | Required if you use the `start` mode. | EC2 Instance Type. Accepts a single type (e.g. `t3.micro`) or a JSON array of types (e.g. `'["t3.micro", "t3.small", "m5.large"]'`). When multiple types are specified, the action tries each in order until one succeeds. Useful for spot instances where capacity may vary by type. |
 | `subnet-id` | Required if you use the `start` mode and don't provide `availability-zones-config`. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group. |
 | `security-group-id` | Required if you use the `start` mode and don't provide `availability-zones-config`. | EC2 Security Group Id. The security group should belong to the same VPC as the specified subnet. Only outbound traffic for port 443 is required. No inbound traffic is required. |
 | `label` | Required if you use the `stop` mode. | Name of the unique label assigned to the runner. The label is provided by the output of the action in the `start` mode. |
@@ -399,6 +399,26 @@ Each configuration object requires `imageId`, `subnetId`, and `securityGroupId`.
               {"imageId": "ami-789", "subnetId": "subnet-ccc", "securityGroupId": "sg-333", "region": "eu-west-1"}
             ]
 ```
+
+### Advanced: Multiple instance types
+
+When using spot instances, a specific instance type may not have available capacity. By specifying multiple instance types as a JSON array, the action will try each type in order until one succeeds. This is especially powerful when combined with multi-AZ failover — the action tries all instance types within each AZ before moving to the next AZ.
+
+```yml
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-123
+          ec2-instance-type: '["c5.xlarge", "c5a.xlarge", "c5d.xlarge", "m5.xlarge"]'
+          subnet-id: subnet-123
+          security-group-id: sg-123
+          market-type: spot
+```
+
+> **Tip:** Choose instance types with similar vCPU/memory specs so your workload runs consistently regardless of which type is selected.
 
 ### Advanced: Debug mode
 

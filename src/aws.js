@@ -213,7 +213,7 @@ function buildMarketOptions() {
   };
 }
 
-async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region, encodedJitConfig) {
+async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, label, githubRegistrationToken, region, encodedJitConfig, instanceType) {
   // Region is always specified now, so we can directly use it
   const ec2ClientOptions = { region };
   const ec2 = new EC2Client(ec2ClientOptions);
@@ -222,7 +222,7 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
 
   const params = {
     ImageId: imageId,
-    InstanceType: config.input.ec2InstanceType,
+    InstanceType: instanceType,
     MaxCount: 1,
     MinCount: 1,
     SecurityGroupIds: [securityGroupId],
@@ -256,7 +256,8 @@ async function createEc2InstanceWithParams(imageId, subnetId, securityGroupId, l
 }
 
 async function startEc2Instance(label, githubRegistrationToken, encodedJitConfig) {
-  core.info(`Attempting to start EC2 instance using ${config.availabilityZones.length} availability zone configuration(s)`);
+  const instanceTypes = config.input.ec2InstanceTypes;
+  core.info(`Attempting to start EC2 instance using ${config.availabilityZones.length} availability zone configuration(s) and ${instanceTypes.length} instance type(s): ${instanceTypes.join(', ')}`);
 
   const errors = [];
 
@@ -268,32 +269,35 @@ async function startEc2Instance(label, githubRegistrationToken, encodedJitConfig
     core.info(`Trying availability zone configuration ${i + 1}/${config.availabilityZones.length}`);
     core.info(`Using imageId: ${azConfig.imageId}, subnetId: ${azConfig.subnetId}, securityGroupId: ${azConfig.securityGroupId}, region: ${region}`);
 
-    try {
-      const ec2InstanceId = await createEc2InstanceWithParams(
-        azConfig.imageId,
-        azConfig.subnetId,
-        azConfig.securityGroupId,
-        label,
-        githubRegistrationToken,
-        region,
-        encodedJitConfig
-      );
+    // Try each instance type within this AZ configuration
+    for (const instanceType of instanceTypes) {
+      core.info(`Trying instance type: ${instanceType}`);
+      try {
+        const ec2InstanceId = await createEc2InstanceWithParams(
+          azConfig.imageId,
+          azConfig.subnetId,
+          azConfig.securityGroupId,
+          label,
+          githubRegistrationToken,
+          region,
+          encodedJitConfig,
+          instanceType
+        );
 
-      core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} using availability zone configuration ${i + 1} in region ${region}`);
-      return { ec2InstanceId, region };
-    } catch (error) {
-      const errorMessage = `Failed to start EC2 instance with configuration ${i + 1} in region ${region}: ${error.message}`;
-      core.warning(errorMessage);
-      errors.push(errorMessage);
-
-      // Continue to the next availability zone configuration
-      continue;
+        core.info(`Successfully started AWS EC2 instance ${ec2InstanceId} (type: ${instanceType}) using availability zone configuration ${i + 1} in region ${region}`);
+        return { ec2InstanceId, region };
+      } catch (error) {
+        const errorMessage = `Failed to start EC2 instance (type: ${instanceType}) with AZ configuration ${i + 1} in region ${region}: ${error.message}`;
+        core.warning(errorMessage);
+        errors.push(errorMessage);
+        continue;
+      }
     }
   }
 
-  // If we've tried all configurations and none worked, throw an error
-  core.error('All availability zone configurations failed');
-  throw new Error(`Failed to start EC2 instance in any availability zone. Errors: ${errors.join('; ')}`);
+  // If we've tried all configurations and instance types and none worked, throw an error
+  core.error('All availability zone configurations and instance types failed');
+  throw new Error(`Failed to start EC2 instance with any configuration. Errors: ${errors.join('; ')}`);
 }
 
 async function terminateEc2Instance() {

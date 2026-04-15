@@ -291,6 +291,47 @@ describe('aws.js - runner-debug', () => {
   });
 });
 
+describe('Config - ec2-instance-type parsing', () => {
+  beforeEach(() => {
+    process.env.AWS_REGION = 'us-east-1';
+  });
+
+  test('parses single instance type string into array', () => {
+    setupInputs({ 'ec2-instance-type': 't3.micro' });
+    const config = createConfig();
+    expect(config.input.ec2InstanceTypes).toEqual(['t3.micro']);
+    expect(config.input.ec2InstanceType).toBe('t3.micro');
+  });
+
+  test('parses JSON array of instance types', () => {
+    setupInputs({ 'ec2-instance-type': '["t3.micro", "t3.small", "m5.large"]' });
+    const config = createConfig();
+    expect(config.input.ec2InstanceTypes).toEqual(['t3.micro', 't3.small', 'm5.large']);
+    expect(config.input.ec2InstanceType).toBe('t3.micro');
+  });
+
+  test('throws on empty JSON array', () => {
+    setupInputs({ 'ec2-instance-type': '[]' });
+    expect(() => createConfig()).toThrow("Invalid 'ec2-instance-type' input");
+  });
+
+  test('throws on invalid JSON array content', () => {
+    setupInputs({ 'ec2-instance-type': '[123, 456]' });
+    expect(() => createConfig()).toThrow("Invalid 'ec2-instance-type' input");
+  });
+
+  test('throws on malformed JSON', () => {
+    setupInputs({ 'ec2-instance-type': '[not json' });
+    expect(() => createConfig()).toThrow("Invalid 'ec2-instance-type' input");
+  });
+
+  test('handles whitespace around single type', () => {
+    setupInputs({ 'ec2-instance-type': '  t3.micro  ' });
+    const config = createConfig();
+    expect(config.input.ec2InstanceTypes).toEqual(['t3.micro']);
+  });
+});
+
 describe('Config - runner-debug input', () => {
   beforeEach(() => {
     process.env.AWS_REGION = 'us-east-1';
